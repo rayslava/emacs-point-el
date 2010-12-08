@@ -119,7 +119,7 @@ Useful for people more reading instead writing")
 (defvar juick-timer nil)
 
 (defvar psto-tmp-dir
-  (expand-file-name (concat "juick-images-" (user-login-name))
+  (expand-file-name (concat "psto-images-" (user-login-name))
                     temporary-file-directory))
 
 (if (not (file-directory-p psto-tmp-dir))

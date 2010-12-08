@@ -37,13 +37,13 @@
 имеет значение t, то полагается размер 96x96, иначе  32x32 пикселя (по
 умолчанию nil).
 
-По умолчанию аватарки сохраняются в `/tmp/juick-images-<user name>/`, отвечает
+По умолчанию аватарки сохраняются в `/tmp/psto-images-<user name>/`, отвечает
 за это переменная `psto-tmp-dir`.
 
 
 Загрузите последнюю версию:
 
-    git clone git://github.com/mad/emacs-juick-el.git
+    git clone git://github.com/nextus/emacs-psto-el.git
 
 Добавьте следующие строки в ваш инициализационный файл:
 
