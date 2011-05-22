@@ -172,6 +172,15 @@ Use FORCE to markup any buffer"
                   (list name))))
 
 (define-key jabber-chat-mode-map [mouse-1] 'psto-go-url)
+(define-key jabber-chat-mode-map "g" 'psto-go-url)
+(define-key jabber-chat-mode-map "п" 'psto-go-url)
+
+(define-key jabber-chat-mode-map "s" 'psto-go-subscribe)
+(define-key jabber-chat-mode-map "ы" 'psto-go-subscribe)
+
+(define-key jabber-chat-mode-map "u" 'psto-go-unsubscribe)
+(define-key jabber-chat-mode-map "г" 'psto-go-unsubscribe)
+
 (define-key jabber-chat-mode-map "\M-p" 'psto-go-to-post-back) ;; FIXME
 (define-key jabber-chat-mode-map "\M-n" 'psto-go-to-post-forward) ;; FIXME
 
@@ -231,7 +240,7 @@ Use FORCE to markup any buffer"
     ;; usually #NNNN supposed #NNNN+
     (if (string-match "/" id)
         (insert (concat id " "))
-          (insert (concat id (if psto-reply-id-add-plus "+" " ")))))
+      (insert (concat id (if psto-reply-id-add-plus "+" " ")))))
   (recenter 10))
 
 (defun psto-find-buffer ()
@@ -278,6 +287,48 @@ Use FORCE to markup any buffer"
   (dolist (overlay psto-overlays)
     (delete-overlay overlay))
   (setq psto-overlays nil))
+
+
+(defun psto-go-url ()
+  (interactive)
+  (if (and (equal (get-text-property (point) 'read-only) t)
+	   (thing-at-point-looking-at psto-id-regex))
+	  (let* ((part-of-url (match-string-no-properties 1))
+		 (part-of-url (replace-regexp-in-string "#" "" part-of-url))
+		 (part-of-url (replace-regexp-in-string "/" "#" part-of-url)))
+	    (message part-of-url)
+	    (browse-url (concat "http://psto.net/" part-of-url))))
+  (if (and (equal (get-text-property (point) 'read-only) t)
+	   (thing-at-point-looking-at psto-user-name-regex))
+	(let* ((part-of-url (match-string-no-properties 1))
+	       (part-of-url (replace-regexp-in-string "@" "" part-of-url)))
+	  (message part-of-url)
+	  (browse-url (concat "http://" part-of-url ".psto.net/")))))
+
+(defun psto-send-message (to text)
+  "Send TEXT to TO imediately"
+  (interactive)
+  (save-excursion
+    (let ((buffer (jabber-chat-create-buffer (jabber-read-account) to)))
+      (set-buffer buffer)
+      (goto-char (point-max))
+      (delete-region jabber-point-insert (point-max))
+      (insert text)
+      (jabber-chat-buffer-send))))
+
+(defun psto-go-subscribe ()
+     (interactive)
+     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z\\.\\-\\_@\.\-]+"))
+         (psto-send-message psto-bot-jid
+                             (concat "S " (match-string-no-properties 0)))
+       (self-insert-command 1)))
+
+(defun psto-go-unsubscribe ()
+     (interactive)
+     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z\\.\\-\\_@\.\-]+"))
+         (psto-send-message psto-bot-jid
+                             (concat "U " (match-string-no-properties 0)))
+       (self-insert-command 1)))
 
 (provide 'psto)
 ;;; psto.el ends here
