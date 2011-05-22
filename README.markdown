@@ -17,6 +17,17 @@
 
 # Как пользоваться?
 
+### Инсталяция
+
+Загрузите последнюю версию:
+
+    git clone git://github.com/nextus/emacs-psto-el.git
+
+Добавьте следующие строки в ваш инициализационный файл:
+
+    (add-to-list 'load-path "path/to/psto-el/")
+    (require 'psto)
+
 ### Навигация (TODO)
 
 - Для перемещения по сообщениям можно использовать `M-e`, `M-a`;
@@ -40,16 +51,6 @@
 По умолчанию аватарки сохраняются в `/tmp/psto-images-<user name>/`, за
 это отвечает переменная `psto-tmp-dir`.
 
-
-Загрузите последнюю версию:
-
-    git clone git://github.com/nextus/emacs-psto-el.git
-
-Добавьте следующие строки в ваш инициализационный файл:
-
-    (add-to-list 'load-path "path/to/psto-el/")
-    (require 'psto)
-
 # Дополнительно
 
 Это дополнение тестировалось на jabber-el 0.7.82 и выше.
@@ -67,11 +68,12 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 
 ### Баги
 
-- Тысячи их!
+- Сотни их!
 
 ### Благодарности
 
 [@eurekafag](http://eurekafag.psto.net)
 
+### Контакты
 Просьба о багах/фичах/etc писать сюда [#ofzho](http://nextus.psto.net/ofzho)
 или на мыло txdevel@gmail.com.

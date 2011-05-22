@@ -57,7 +57,7 @@
   "face for displaying user name"
   :group 'psto-faces)
 
-(defvar psto-reply-id-add-plus nil
+(defvar psto-reply-id-add-plus t
   "Set to t then id inserted with + (e.g NNNN+).
 Useful for people more reading instead writing")
 
@@ -245,6 +245,20 @@ Use FORCE to markup any buffer"
                            (string-match (jabber-chat-get-buffer psto-bot-jid)
                                          (buffer-name (window-buffer w)))))))
       (select-window psto-window))))
+
+(defadvice jabber-chat-with (around jabber-chat-with-around-advice
+                                    (jc jid &optional other-window) activate)
+  "Used for markup history buffer"
+  ad-do-it
+  ;; FIXME: this activate ever when open buffer with psto@psto.net,
+  ;; maybe adviced `jabber-chat-insert-backlog-entry' instead
+  ;; `jabber-chat-with'.
+  (when (string-match-p psto-bot-jid jid)
+    (save-excursion
+      (goto-char (point-min))
+      (setq psto-point-last-message (point-min))
+      (psto-markup-chat psto-bot-jid (current-buffer) nil nil t)
+      (setq psto-point-last-message (point-max)))))
 
 (defun psto-next-button ()
   "move point to next button"
