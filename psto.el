@@ -181,16 +181,8 @@ Use FORCE to markup any buffer"
 (define-key jabber-chat-mode-map "u" 'psto-go-unsubscribe)
 (define-key jabber-chat-mode-map "г" 'psto-go-unsubscribe)
 
-(define-key jabber-chat-mode-map "\M-p" 'psto-go-to-post-back) ;; FIXME
-(define-key jabber-chat-mode-map "\M-n" 'psto-go-to-post-forward) ;; FIXME
-
-(defun psto-go-to-post-back ()
-  (interactive)
-  (re-search-backward "@[a-z0-9]+:$" nil t))
-
-(defun psto-go-to-post-forward ()
-  (interactive)
-  (re-search-forward "@[a-z0-9]+:$" nil t))
+(define-key jabber-chat-mode-map "\M-p" 'psto-go-to-post-back)
+(define-key jabber-chat-mode-map "\M-n" 'psto-go-to-post-forward)
 
 (defun psto-markup-user-name ()
   "Markup user-name matched by regex `psto-regex-user-name'"
@@ -303,7 +295,9 @@ Use FORCE to markup any buffer"
 	(let* ((part-of-url (match-string-no-properties 1))
 	       (part-of-url (replace-regexp-in-string "@" "" part-of-url)))
 	  (message part-of-url)
-	  (browse-url (concat "http://" part-of-url ".psto.net/")))))
+	  (browse-url (concat "http://" part-of-url ".psto.net/"))))
+    (unless (string= last-command "mouse-drag-region")
+      (self-insert-command 1)))
 
 (defun psto-send-message (to text)
   "Send TEXT to TO imediately"
@@ -318,17 +312,25 @@ Use FORCE to markup any buffer"
 
 (defun psto-go-subscribe ()
      (interactive)
-     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z\\.\\-\\_@\.\-]+"))
+     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
          (psto-send-message psto-bot-jid
                              (concat "S " (match-string-no-properties 0)))
        (self-insert-command 1)))
 
 (defun psto-go-unsubscribe ()
      (interactive)
-     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z\\.\\-\\_@\.\-]+"))
+     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
          (psto-send-message psto-bot-jid
                              (concat "U " (match-string-no-properties 0)))
        (self-insert-command 1)))
+
+(defun psto-go-to-post-back ()
+  (interactive)
+  (re-search-backward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t))
+
+(defun psto-go-to-post-forward ()
+  (interactive)
+  (re-search-forward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t))
 
 (provide 'psto)
 ;;; psto.el ends here
