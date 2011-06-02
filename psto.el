@@ -92,18 +92,19 @@ Useful for people more reading instead writing")
 (defvar psto-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 
 (defun psto-markup-chat (from buffer text proposed-alert &optional force)
-  "Markup  message from `psto-bot-jid'.
+  "Markup message from `psto-bot-jid'.
 Where FROM is jid sender, BUFFER is buffer with message TEXT
 Use FORCE to markup any buffer"
   (if (or force (string-match psto-bot-jid from))
       (save-excursion
         (set-buffer buffer)
         (when (null force)
-          (if (version< jabber-version "0.8.0")
+          (condition-case nil
               (jabber-truncate-top)
-            (jabber-truncate-top buffer))
+            (wrong-number-of-arguments
+             (jabber-truncate-top buffer)))
           (setq psto-point-last-message
-                (re-search-backward "\\[[A-Za-z]+:[0-9]+\\].*>" nil t))) ;; FIXME
+                (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
         (psto-markup-user-name)
         (psto-markup-id)
         (when (and psto-icon-mode window-system)
