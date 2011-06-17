@@ -182,6 +182,9 @@ Use FORCE to markup any buffer"
 (define-key jabber-chat-mode-map "u" 'psto-go-unsubscribe)
 (define-key jabber-chat-mode-map "г" 'psto-go-unsubscribe)
 
+(define-key jabber-chat-mode-map "\C-x\M-p" 'psto-go-to-nick-back)
+(define-key jabber-chat-mode-map "\C-x\M-n" 'psto-go-to-nick-forward)
+
 (define-key jabber-chat-mode-map "\M-p" 'psto-go-to-post-back)
 (define-key jabber-chat-mode-map "\M-n" 'psto-go-to-post-forward)
 
@@ -325,13 +328,23 @@ Use FORCE to markup any buffer"
                              (concat "U " (match-string-no-properties 0)))
        (self-insert-command 1)))
 
+(defun psto-go-to-nick-back ()
+  (interactive)
+  (re-search-backward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t)
+  (backward-char))
+
+(defun psto-go-to-nick-forward ()
+  (interactive)
+  (re-search-forward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t)
+  (backward-char))
+
 (defun psto-go-to-post-back ()
   (interactive)
-  (re-search-backward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t))
+  (re-search-backward "^#[A-Za-z0-9\\.\\_\\-]+" nil t))
 
 (defun psto-go-to-post-forward ()
   (interactive)
-  (re-search-forward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t))
+  (re-search-forward "^#[A-Za-z0-9\\.\\_\\-]+" nil t))
 
 (provide 'psto)
 ;;; psto.el ends here
