@@ -80,10 +80,6 @@ Useful for people more reading instead writing")
 (defvar point-icon-mode t
   "This mode display avatar in buffer chat")
 
-;; NEED?
-(defvar point-icon-hight nil
-  "If t then show 96x96 avatars")
-
 (defvar point-tmp-dir
   (expand-file-name (concat "point-images-" (user-login-name))
                     temporary-file-directory))
@@ -115,6 +111,13 @@ Use FORCE to markup any buffer"
 
 (add-hook 'jabber-alert-message-hooks 'point-markup-chat)
 
+(defun point-avatar-file-check (name)
+  (if (file-exists-p (concat point-tmp-dir "/" name ".jpg"))
+      (concat point-tmp-dir "/" name ".jpg")
+    (if (file-exists-p (concat point-tmp-dir "/" name ".png"))
+	(concat point-tmp-dir "/" name ".png")
+      "")))
+
 (defun point-avatar-insert ()
   (goto-char (or point-point-last-message (point-min)))
   (setq point-avatar-internal-stack nil)
@@ -122,13 +125,17 @@ Use FORCE to markup any buffer"
     (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
       (let* ((icon-string "\n ")
              (name (match-string-no-properties 2))
-             (fake-jpg (concat point-tmp-dir "/" name ".jpg")))
+	     (filename (point-avatar-file-check name))
+	     (ext (substring filename (string-match "\\(jpg\\|png\\)" filename))))
         (goto-char (match-beginning 0))
         (point-avatar-download name)
         (set-text-properties
          1 2 `(display
-               (image :type jpeg
-                      :file ,fake-jpg))
+               (image :type
+		      ,(if (equal ext "png") 'png
+				 (if (equal ext "jpg") 'jpeg
+				 nil))
+                      :file ,filename))
          icon-string)
         (re-search-forward "@" nil t)
         (goto-char (- (point) 1))
@@ -137,39 +144,42 @@ Use FORCE to markup any buffer"
 
 (defun point-avatar-download (name)
   "Download avatar from point.im"
-  (if (or (assoc-string name point-avatar-internal-stack)
-          (and (file-exists-p (concat point-tmp-dir "/" name ".jpg"))
-               (< (time-to-number-of-days
-                   (time-subtract (current-time)
-                                  (nth 5 (file-attributes (concat point-tmp-dir "/" name ".jpg")))))
-                  point-avatar-update-day)))
-      nil
-    (let ((avatar-url (concat "http://" name ".point.im/"))
+  (let ((filename (point-avatar-file-check name)))
+    (if (or (assoc-string name point-avatar-internal-stack)
+	    (and (file-exists-p filename)
+		 (< (time-to-number-of-days
+		     (time-subtract (current-time)
+				    (nth 5 (file-attributes filename))))
+		    point-avatar-update-day)))
+	    nil))
+    (let ((avatar-url (concat "https://" name ".point.im/"))
           (url-request-method "GET"))
       (push name point-avatar-internal-stack)
       (url-retrieve avatar-url
                     '(lambda (status name)
                        (let ((result-buffer (current-buffer)))
                          (goto-char (point-min))
-                           (if (re-search-forward "/a/40/[A-Za-z0-9\\.\\_\\-]*\.jpg" nil t)
-                                (point-avatar-download-and-save (match-string 0) name)
-                              (point-avatar-download-and-save "/a/40/" name ".jpg"))
+                           (if (re-search-forward "/a/40/[A-Za-z0-9\\.\\_\\-]*\.\\(jpg\\|png\\)" nil t)
+			       (point-avatar-download-and-save (match-string 0) name)
+			     (point-avatar-download-and-save "/a/40/" name))
                            (kill-buffer result-buffer)))
-                    (list name)))))
+                    (list name))))
 
 (defun point-avatar-download-and-save (link name)
   "Extract image from LINK and save it with NAME in `point-tmp-dir'"
-  (let* ((filename (substring link (string-match "\\(.0.jpg\\|.0/[A-Za-z0-9\\.\\_\\-]+\.jpg\\)" link)))
+  (let* ((filename (substring link (string-match "\\(.0.\\(jpg\\|png\\)\\|.0/[A-Za-z0-9\\.\\_\\-]+\.\\(jpg\\|png\\)\\)" link)))
          (avatar-url (concat "https://i.point.im/a/" filename))
-         (url-request-method "GET"))
+         (url-request-method "GET")
+	 (ext (substring filename (string-match "\\(jpg\\|png\\)" filename))))
     (url-retrieve avatar-url
-                  '(lambda (status name)
+                  `(lambda (status name)
                      (let ((result-buffer (current-buffer))
                            (buffer-file-coding-system 'binary)
                            (file-coding-system 'binary)
                            (coding-system-for-write 'binary))
                        (delete-region (point-min) (re-search-forward "\n\n" nil t))
-                       (write-region (point-min) (point-max) (concat point-tmp-dir "/" name ".jpg"))
+                       (write-region (point-min) (point-max)
+				     (concat point-tmp-dir "/" name "." ,ext))
                        (kill-buffer (current-buffer))
                        (kill-buffer result-buffer)))
                   (list name))))
