@@ -127,7 +127,7 @@ Use FORCE to markup any buffer"
         (point-avatar-download name)
         (set-text-properties
          1 2 `(display
-               (image :type jpg
+               (image :type jpeg
                       :file ,fake-jpg))
          icon-string)
         (re-search-forward "@" nil t)
