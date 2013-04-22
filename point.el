@@ -122,13 +122,13 @@ Use FORCE to markup any buffer"
     (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
       (let* ((icon-string "\n ")
              (name (match-string-no-properties 2))
-             (fake-png (concat point-tmp-dir "/" name ".png")))
+             (fake-jpg (concat point-tmp-dir "/" name ".jpg")))
         (goto-char (match-beginning 0))
         (point-avatar-download name)
         (set-text-properties
          1 2 `(display
-               (image :type png
-                      :file ,fake-png))
+               (image :type jpg
+                      :file ,fake-jpg))
          icon-string)
         (re-search-forward "@" nil t)
         (goto-char (- (point) 1))
@@ -136,12 +136,12 @@ Use FORCE to markup any buffer"
         (re-search-forward "" nil t))))) ;; FIXME
 
 (defun point-avatar-download (name)
-  "Download avatar from point.net"
+  "Download avatar from point.im"
   (if (or (assoc-string name point-avatar-internal-stack)
-          (and (file-exists-p (concat point-tmp-dir "/" name ".png"))
+          (and (file-exists-p (concat point-tmp-dir "/" name ".jpg"))
                (< (time-to-number-of-days
                    (time-subtract (current-time)
-                                  (nth 5 (file-attributes (concat point-tmp-dir "/" name ".png")))))
+                                  (nth 5 (file-attributes (concat point-tmp-dir "/" name ".jpg")))))
                   point-avatar-update-day)))
       nil
     (let ((avatar-url (concat "http://" name ".point.im/"))
@@ -151,16 +151,16 @@ Use FORCE to markup any buffer"
                     '(lambda (status name)
                        (let ((result-buffer (current-buffer)))
                          (goto-char (point-min))
-                           (if (re-search-forward "/a/40/[A-Za-z0-9\\.\\_\\-]*\.png" nil t)
+                           (if (re-search-forward "/a/40/[A-Za-z0-9\\.\\_\\-]*\.jpg" nil t)
                                 (point-avatar-download-and-save (match-string 0) name)
-                              (point-avatar-download-and-save "/a/40/" name ".png"))
+                              (point-avatar-download-and-save "/a/40/" name ".jpg"))
                            (kill-buffer result-buffer)))
                     (list name)))))
 
 (defun point-avatar-download-and-save (link name)
   "Extract image from LINK and save it with NAME in `point-tmp-dir'"
-  (let* ((filename (substring link (string-match "\\(0.png\\|0/[A-Za-z0-9\\.\\_\\-]+\.png\\)" link)))
-         (avatar-url (concat "https://i.point.im/" filename))
+  (let* ((filename (substring link (string-match "\\(.0.jpg\\|.0/[A-Za-z0-9\\.\\_\\-]+\.jpg\\)" link)))
+         (avatar-url (concat "https://i.point.im/a/" filename))
          (url-request-method "GET"))
     (url-retrieve avatar-url
                   '(lambda (status name)
@@ -169,7 +169,7 @@ Use FORCE to markup any buffer"
                            (file-coding-system 'binary)
                            (coding-system-for-write 'binary))
                        (delete-region (point-min) (re-search-forward "\n\n" nil t))
-                       (write-region (point-min) (point-max) (concat point-tmp-dir "/" name ".png"))
+                       (write-region (point-min) (point-max) (concat point-tmp-dir "/" name ".jpg"))
                        (kill-buffer (current-buffer))
                        (kill-buffer result-buffer)))
                   (list name))))
