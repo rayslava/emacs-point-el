@@ -1,13 +1,15 @@
-;;; psto.el --- improvement reading psto@psto.net
+;;; point.el --- improvement reading p@point.im
 
 ;; Copyright (C) 2009  mad
 ;; Copyright (C) 2009  vyazovoi
 ;; Copypaste     2010-2011  nextus
+;; Copypaste     2013  rayslava
 
 ;; Author: mad <owner.mad.epa@gmail.com>
 ;; Modification for psto: nextus <txdevel@gmail.com>
+;; Modification for point: rayslava <rayslava@gmail.com>
 
-;; Keywords: juick, psto
+;; Keywords: juick, psto, point
 ;; Version: 0.1p
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -25,16 +27,16 @@
 
 ;;; Commentary:
 
-;; Markup message recivied from psto@psto.net and some usefull keybindings.
+;; Markup message recivied from p@point.im and some usefull keybindings.
 
 ;;; Installing:
 
-;; 1. Put psto.el to you load-path
+;; 1. Put point.el to you load-path
 ;; 2. put this to your init file:
 ;; 3. Set tmp dir
 
-;; (require 'psto)
-;; (setq psto-tmp-dir "~/.emacs.d/avatars/psto")
+;; (require 'point)
+;; (setq point-tmp-dir "~/.emacs.d/avatars/point")
 ;; and any useful settings
 
 ;;; Code:
@@ -44,58 +46,58 @@
 
 (require 'jabber-chatbuffer)
 
-(defgroup psto-faces nil "Faces for displaying Psto msg"
-  :group 'psto)
+(defgroup point-faces nil "Faces for displaying Point.im msg"
+  :group 'point)
 
-(defface psto-id-face
+(defface point-id-face
   '((t (:weight bold)))
   "face for displaying id"
-  :group 'psto-faces)
+  :group 'point-faces)
 
-(defface psto-user-name-face
+(defface point-user-name-face
   '((t (:foreground "blue" :weight bold :slant normal)))
   "face for displaying user name"
-  :group 'psto-faces)
+  :group 'point-faces)
 
-(defvar psto-reply-id-add-plus t
+(defvar point-reply-id-add-plus t
   "Set to t then id inserted with + (e.g NNNN+).
 Useful for people more reading instead writing")
 
-(defvar psto-overlays nil)
+(defvar point-overlays nil)
 
-(defvar psto-bot-jid "psto@psto.net")
+(defvar point-bot-jid "p@point.im")
 
-(defvar psto-image-buffer "*psto-avatar-dir*")
+(defvar point-image-buffer "*point-avatar-dir*")
 
-(defvar psto-point-last-message nil)
+(defvar point-point-last-message nil)
 
-(defvar psto-avatar-internal-stack nil
+(defvar point-avatar-internal-stack nil
   "Internal var")
 
-(defvar psto-avatar-update-day 4
-  "Update (download) avatar after `psto-avatar-update-day'")
+(defvar point-avatar-update-day 4
+  "Update (download) avatar after `point-avatar-update-day'")
 
-(defvar psto-icon-mode t
+(defvar point-icon-mode t
   "This mode display avatar in buffer chat")
 
 ;; NEED?
-(defvar psto-icon-hight nil
+(defvar point-icon-hight nil
   "If t then show 96x96 avatars")
 
-(defvar psto-tmp-dir
-  (expand-file-name (concat "psto-images-" (user-login-name))
+(defvar point-tmp-dir
+  (expand-file-name (concat "point-images-" (user-login-name))
                     temporary-file-directory))
-(if (not (file-directory-p psto-tmp-dir))
-    (make-directory psto-tmp-dir))
+(if (not (file-directory-p point-tmp-dir))
+    (make-directory point-tmp-dir))
 
-(defvar psto-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
-(defvar psto-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
+(defvar point-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
+(defvar point-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 
-(defun psto-markup-chat (from buffer text proposed-alert &optional force)
-  "Markup message from `psto-bot-jid'.
+(defun point-markup-chat (from buffer text proposed-alert &optional force)
+  "Markup message from `point-bot-jid'.
 Where FROM is jid sender, BUFFER is buffer with message TEXT
 Use FORCE to markup any buffer"
-  (if (or force (string-match psto-bot-jid from))
+  (if (or force (string-match point-bot-jid from))
       (save-excursion
         (set-buffer buffer)
         (when (null force)
@@ -103,26 +105,26 @@ Use FORCE to markup any buffer"
               (jabber-truncate-top)
             (wrong-number-of-arguments
              (jabber-truncate-top buffer)))
-          (setq psto-point-last-message
+          (setq point-point-last-message
                 (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
-        (psto-markup-user-name)
-        (psto-markup-id)
-        (when (and psto-icon-mode window-system)
+        (point-markup-user-name)
+        (point-markup-id)
+        (when (and point-icon-mode window-system)
           (clear-image-cache)
-          (psto-avatar-insert)))))
+          (point-avatar-insert)))))
 
-(add-hook 'jabber-alert-message-hooks 'psto-markup-chat)
+(add-hook 'jabber-alert-message-hooks 'point-markup-chat)
 
-(defun psto-avatar-insert ()
-  (goto-char (or psto-point-last-message (point-min)))
-  (setq psto-avatar-internal-stack nil)
+(defun point-avatar-insert ()
+  (goto-char (or point-point-last-message (point-min)))
+  (setq point-avatar-internal-stack nil)
   (let ((inhibit-read-only t))
     (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
       (let* ((icon-string "\n ")
              (name (match-string-no-properties 2))
-             (fake-png (concat psto-tmp-dir "/" name ".png")))
+             (fake-png (concat point-tmp-dir "/" name ".png")))
         (goto-char (match-beginning 0))
-        (psto-avatar-download name)
+        (point-avatar-download name)
         (set-text-properties
          1 2 `(display
                (image :type png
@@ -133,32 +135,32 @@ Use FORCE to markup any buffer"
         (insert (concat icon-string " "))
         (re-search-forward "" nil t))))) ;; FIXME
 
-(defun psto-avatar-download (name)
-  "Download avatar from psto.net"
-  (if (or (assoc-string name psto-avatar-internal-stack)
-          (and (file-exists-p (concat psto-tmp-dir "/" name ".png"))
+(defun point-avatar-download (name)
+  "Download avatar from point.net"
+  (if (or (assoc-string name point-avatar-internal-stack)
+          (and (file-exists-p (concat point-tmp-dir "/" name ".png"))
                (< (time-to-number-of-days
                    (time-subtract (current-time)
-                                  (nth 5 (file-attributes (concat psto-tmp-dir "/" name ".png")))))
-                  psto-avatar-update-day)))
+                                  (nth 5 (file-attributes (concat point-tmp-dir "/" name ".png")))))
+                  point-avatar-update-day)))
       nil
-    (let ((avatar-url (concat "http://" name ".psto.net/"))
+    (let ((avatar-url (concat "http://" name ".point.im/"))
           (url-request-method "GET"))
-      (push name psto-avatar-internal-stack)
+      (push name point-avatar-internal-stack)
       (url-retrieve avatar-url
                     '(lambda (status name)
                        (let ((result-buffer (current-buffer)))
                          (goto-char (point-min))
-                           (if (re-search-forward "/img/a/80/[A-Za-z0-9\\.\\_\\-]*\.png" nil t)
-                                (psto-avatar-download-and-save (match-string 0) name)
-                              (psto-avatar-download-and-save "/img/a/40.png" name))
+                           (if (re-search-forward "/a/40/[A-Za-z0-9\\.\\_\\-]*\.png" nil t)
+                                (point-avatar-download-and-save (match-string 0) name)
+                              (point-avatar-download-and-save "/a/40/" name ".png"))
                            (kill-buffer result-buffer)))
                     (list name)))))
 
-(defun psto-avatar-download-and-save (link name)
-  "Extract image from LINK and save it with NAME in `psto-tmp-dir'"
+(defun point-avatar-download-and-save (link name)
+  "Extract image from LINK and save it with NAME in `point-tmp-dir'"
   (let* ((filename (substring link (string-match "\\(0.png\\|0/[A-Za-z0-9\\.\\_\\-]+\.png\\)" link)))
-         (avatar-url (concat "http://psto.net/img/a/4" filename))
+         (avatar-url (concat "https://i.point.im/" filename))
          (url-request-method "GET"))
     (url-retrieve avatar-url
                   '(lambda (status name)
@@ -167,105 +169,105 @@ Use FORCE to markup any buffer"
                            (file-coding-system 'binary)
                            (coding-system-for-write 'binary))
                        (delete-region (point-min) (re-search-forward "\n\n" nil t))
-                       (write-region (point-min) (point-max) (concat psto-tmp-dir "/" name ".png"))
+                       (write-region (point-min) (point-max) (concat point-tmp-dir "/" name ".png"))
                        (kill-buffer (current-buffer))
                        (kill-buffer result-buffer)))
                   (list name))))
 
-(define-key jabber-chat-mode-map [mouse-1] 'psto-go-url)
-(define-key jabber-chat-mode-map "g" 'psto-go-url)
-(define-key jabber-chat-mode-map "п" 'psto-go-url)
+(define-key jabber-chat-mode-map [mouse-1] 'point-go-url)
+(define-key jabber-chat-mode-map "g" 'point-go-url)
+(define-key jabber-chat-mode-map "п" 'point-go-url)
 
-(define-key jabber-chat-mode-map "s" 'psto-go-subscribe)
-(define-key jabber-chat-mode-map "ы" 'psto-go-subscribe)
+(define-key jabber-chat-mode-map "s" 'point-go-subscribe)
+(define-key jabber-chat-mode-map "ы" 'point-go-subscribe)
 
-(define-key jabber-chat-mode-map "u" 'psto-go-unsubscribe)
-(define-key jabber-chat-mode-map "г" 'psto-go-unsubscribe)
+(define-key jabber-chat-mode-map "u" 'point-go-unsubscribe)
+(define-key jabber-chat-mode-map "г" 'point-go-unsubscribe)
 
-(define-key jabber-chat-mode-map "\C-x\M-p" 'psto-go-to-nick-back)
-(define-key jabber-chat-mode-map "\C-x\M-n" 'psto-go-to-nick-forward)
+(define-key jabber-chat-mode-map "\C-x\M-p" 'point-go-to-nick-back)
+(define-key jabber-chat-mode-map "\C-x\M-n" 'point-go-to-nick-forward)
 
-(define-key jabber-chat-mode-map "\M-p" 'psto-go-to-post-back)
-(define-key jabber-chat-mode-map "\M-n" 'psto-go-to-post-forward)
+(define-key jabber-chat-mode-map "\M-p" 'point-go-to-post-back)
+(define-key jabber-chat-mode-map "\M-n" 'point-go-to-post-forward)
 
-(defun psto-markup-user-name ()
-  "Markup user-name matched by regex `psto-regex-user-name'"
-  (goto-char (or psto-point-last-message (point-min)))
-  (while (re-search-forward psto-user-name-regex nil t)
+(defun point-markup-user-name ()
+  "Markup user-name matched by regex `point-regex-user-name'"
+  (goto-char (or point-point-last-message (point-min)))
+  (while (re-search-forward point-user-name-regex nil t)
     (when (match-string 1)
-      (psto-add-overlay (match-beginning 1) (match-end 1)
-                         'psto-user-name-face)
+      (point-add-overlay (match-beginning 1) (match-end 1)
+                         'point-user-name-face)
       (make-button (match-beginning 1) (match-end 1)
-                   'action 'psto-insert-user-name))))
+                   'action 'point-insert-user-name))))
 
-(defun psto-markup-id ()
-  "Markup id matched by regex `psto-regex-id'"
-  (goto-char (or psto-point-last-message (point-min)))
-  (while (re-search-forward psto-id-regex nil t)
+(defun point-markup-id ()
+  "Markup id matched by regex `point-regex-id'"
+  (goto-char (or point-point-last-message (point-min)))
+  (while (re-search-forward point-id-regex nil t)
     (when (match-string 1)
-      (psto-add-overlay (match-beginning 1) (match-end 1)
-                         'psto-id-face)
+      (point-add-overlay (match-beginning 1) (match-end 1)
+                         'point-id-face)
       (make-button (match-beginning 1) (match-end 1)
-                   'action 'psto-insert-id))))
+                   'action 'point-insert-id))))
 
-(defun psto-insert-user-name (button)
+(defun point-insert-user-name (button)
   "Inserting reply id in conversation buffer"
   (let ((user-name (buffer-substring-no-properties
                     (overlay-start button)
                     (- (re-search-forward "[\n :]" nil t) 1))))
-    (when (string-match-p (jabber-chat-get-buffer psto-bot-jid)
+    (when (string-match-p (jabber-chat-get-buffer point-bot-jid)
                           (buffer-name))
       (message "Mark set")
       (push-mark))
-    (psto-find-buffer)
+    (point-find-buffer)
     (goto-char (point-max))
     (insert (concat user-name " ")))
   (recenter 10))
 
-(defun psto-insert-id (button)
+(defun point-insert-id (button)
   "Inserting reply id in conversation buffer"
   (let ((id (buffer-substring-no-properties
              (overlay-start button)
              (- (re-search-forward "[\n: ]" nil t) 1))))
-    (when (string-match-p (jabber-chat-get-buffer psto-bot-jid)
+    (when (string-match-p (jabber-chat-get-buffer point-bot-jid)
                           (buffer-name))
       (message "Mark set")
       (push-mark))
-    (psto-find-buffer)
+    (point-find-buffer)
     (goto-char (point-max))
     ;; usually #NNNN supposed #NNNN+
     (if (string-match "/" id)
         (insert (concat id " "))
-      (insert (concat id (if psto-reply-id-add-plus "+" " ")))))
+      (insert (concat id (if point-reply-id-add-plus "+" " ")))))
   (recenter 10))
 
-(defun psto-find-buffer ()
-  "Find buffer with `psto-bot-jid'"
+(defun point-find-buffer ()
+  "Find buffer with `point-bot-jid'"
   (interactive)
-  (when (not (string-match (jabber-chat-get-buffer psto-bot-jid)
+  (when (not (string-match (jabber-chat-get-buffer point-bot-jid)
                            (buffer-name)))
     (delete-window)
-    (let ((psto-window (get-window-with-predicate
+    (let ((point-window (get-window-with-predicate
                          (lambda (w)
-                           (string-match (jabber-chat-get-buffer psto-bot-jid)
+                           (string-match (jabber-chat-get-buffer point-bot-jid)
                                          (buffer-name (window-buffer w)))))))
-      (select-window psto-window))))
+      (select-window point-window))))
 
 (defadvice jabber-chat-with (around jabber-chat-with-around-advice
                                     (jc jid &optional other-window) activate)
   "Used for markup history buffer"
   ad-do-it
-  ;; FIXME: this activate ever when open buffer with psto@psto.net,
+  ;; FIXME: this activate ever when open buffer with point@point.net,
   ;; maybe adviced `jabber-chat-insert-backlog-entry' instead
   ;; `jabber-chat-with'.
-  (when (string-match-p psto-bot-jid jid)
+  (when (string-match-p point-bot-jid jid)
     (save-excursion
       (goto-char (point-min))
-      (setq psto-point-last-message (point-min))
-      (psto-markup-chat psto-bot-jid (current-buffer) nil nil t)
-      (setq psto-point-last-message (point-max)))))
+      (setq point-point-last-message (point-min))
+      (point-markup-chat point-bot-jid (current-buffer) nil nil t)
+      (setq point-point-last-message (point-max)))))
 
-(defun psto-next-button ()
+(defun point-next-button ()
   "move point to next button"
   (interactive)
   (if (next-button (point))
@@ -274,36 +276,36 @@ Use FORCE to markup any buffer"
       (goto-char (point-max))
       (message "button not found"))))
 
-(defun psto-add-overlay (begin end faces)
+(defun point-add-overlay (begin end faces)
   (let ((overlay (make-overlay begin end)))
     (overlay-put overlay 'face faces)
-    (push overlay psto-overlays)))
+    (push overlay point-overlays)))
 
-(defun psto-delete-overlays ()
-  (dolist (overlay psto-overlays)
+(defun point-delete-overlays ()
+  (dolist (overlay point-overlays)
     (delete-overlay overlay))
-  (setq psto-overlays nil))
+  (setq point-overlays nil))
 
 
-(defun psto-go-url ()
+(defun point-go-url ()
   (interactive)
   (if (and (equal (get-text-property (point) 'read-only) t)
-	   (thing-at-point-looking-at psto-id-regex))
+	   (thing-at-point-looking-at point-id-regex))
 	  (let* ((part-of-url (match-string-no-properties 1))
 		 (part-of-url (replace-regexp-in-string "#" "" part-of-url))
 		 (part-of-url (replace-regexp-in-string "/" "#" part-of-url)))
 	    (message part-of-url)
-	    (browse-url (concat "http://psto.net/" part-of-url))))
+	    (browse-url (concat "http://point.im/" part-of-url))))
   (if (and (equal (get-text-property (point) 'read-only) t)
-	   (thing-at-point-looking-at psto-user-name-regex))
+	   (thing-at-point-looking-at point-user-name-regex))
 	(let* ((part-of-url (match-string-no-properties 1))
 	       (part-of-url (replace-regexp-in-string "@" "" part-of-url)))
 	  (message part-of-url)
-	  (browse-url (concat "http://" part-of-url ".psto.net/"))))
+	  (browse-url (concat "http://" part-of-url ".point.im/"))))
     (unless (string= last-command "mouse-drag-region")
       (self-insert-command 1)))
 
-(defun psto-send-message (to text)
+(defun point-send-message (to text)
   "Send TEXT to TO imediately"
   (interactive)
   (save-excursion
@@ -314,37 +316,37 @@ Use FORCE to markup any buffer"
       (insert text)
       (jabber-chat-buffer-send))))
 
-(defun psto-go-subscribe ()
+(defun point-go-subscribe ()
      (interactive)
      (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
-         (psto-send-message psto-bot-jid
+         (point-send-message point-bot-jid
                              (concat "S " (match-string-no-properties 0)))
        (self-insert-command 1)))
 
-(defun psto-go-unsubscribe ()
+(defun point-go-unsubscribe ()
      (interactive)
      (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
-         (psto-send-message psto-bot-jid
+         (point-send-message point-bot-jid
                              (concat "U " (match-string-no-properties 0)))
        (self-insert-command 1)))
 
-(defun psto-go-to-nick-back ()
+(defun point-go-to-nick-back ()
   (interactive)
   (re-search-backward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t)
   (backward-char))
 
-(defun psto-go-to-nick-forward ()
+(defun point-go-to-nick-forward ()
   (interactive)
   (re-search-forward "@[A-Za-z0-9\\.\\_\\-]+:$" nil t)
   (backward-char))
 
-(defun psto-go-to-post-back ()
+(defun point-go-to-post-back ()
   (interactive)
   (re-search-backward "^#[A-Za-z0-9\\.\\_\\-]+" nil t))
 
-(defun psto-go-to-post-forward ()
+(defun point-go-to-post-forward ()
   (interactive)
   (re-search-forward "^#[A-Za-z0-9\\.\\_\\-]+" nil t))
 
-(provide 'psto)
-;;; psto.el ends here
+(provide 'point)
+;;; point.el ends here
