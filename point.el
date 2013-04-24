@@ -123,24 +123,26 @@ Use FORCE to markup any buffer"
   (setq point-avatar-internal-stack nil)
   (let ((inhibit-read-only t))
     (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
+      (message "Before let")
       (let* ((icon-string "\n ")
              (name (match-string-no-properties 2))
-	     (filename (point-avatar-file-check name))
-	     (ext (substring filename (string-match "\\(jpg\\|png\\)" filename))))
+	     (filename (point-avatar-file-check name)))
         (goto-char (match-beginning 0))
         (point-avatar-download name)
-        (set-text-properties
-         1 2 `(display
-               (image :type
-		      ,(if (equal ext "png") 'png
-				 (if (equal ext "jpg") 'jpeg
-				 nil))
-                      :file ,filename))
-         icon-string)
+	(let ((ext (substring filename (string-match "\\(jpg\\|png\\)" filename))))
+	  (set-text-properties
+	   1 2 `(display
+		 (image :type
+			,(if (equal ext "png") 'png
+			   (if (equal ext "jpg") 'jpeg
+			     nil))
+			:file ,filename))
+	   icon-string)
+	  (message icon-string)
         (re-search-forward "@" nil t)
         (goto-char (- (point) 1))
         (insert (concat icon-string " "))
-        (re-search-forward "" nil t))))) ;; FIXME
+        (re-search-forward "" nil t)))))) ;; FIXME
 
 (defun point-avatar-download (name)
   "Download avatar from point.im"
