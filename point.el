@@ -89,6 +89,13 @@ Useful for people more reading instead writing")
 (defvar point-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 
+; Workaround to overcome point &amp bug
+(defvar point-amp-regex "\\(&amp;\\|&\\)#\\([0-9]+\\);")
+(defvar point-amp-subst-list
+  '(("&amp;" . "&")
+    ("&lt;"  . "<")
+    ("&gt;"  . ">")))
+
 (defun point-markup-chat (from buffer text proposed-alert &optional force)
   "Markup message from `point-bot-jid'.
 Where FROM is jid sender, BUFFER is buffer with message TEXT
@@ -103,6 +110,8 @@ Use FORCE to markup any buffer"
              (jabber-truncate-top buffer)))
           (setq point-point-last-message
                 (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
+	(point-fix-amps)
+	(message "after-amps")
         (point-markup-user-name)
         (point-markup-id)
         (when (and point-icon-mode window-system)
@@ -201,7 +210,7 @@ Use FORCE to markup any buffer"
 (define-key jabber-chat-mode-map "\M-n" 'point-go-to-post-forward)
 
 (defun point-markup-user-name ()
-  "Markup user-name matched by regex `point-regex-user-name'"
+  "Markup user-name matched by regex `point-user-name-regex'"
   (goto-char (or point-point-last-message (point-min)))
   (while (re-search-forward point-user-name-regex nil t)
     (when (match-string 1)
@@ -210,8 +219,20 @@ Use FORCE to markup any buffer"
       (make-button (match-beginning 1) (match-end 1)
                    'action 'point-insert-user-name))))
 
+(defun point-fix-amps ()
+  "Markup user-name matched by regex `point-amp-regex'"
+  (let ((inhibit-read-only t))
+    (goto-char (or point-point-last-message (point-min)))
+    (while (re-search-forward point-amp-regex nil t)
+      (when (match-string 2)
+	(replace-match (char-to-string (string-to-number (match-string 2))))))
+    (dolist (subst-pair point-amp-subst-list)
+      (goto-char (or point-point-last-message (point-min)))
+      (while (search-forward (car subst-pair) nil t)
+	(replace-match (cdr subst-pair))))))
+
 (defun point-markup-id ()
-  "Markup id matched by regex `point-regex-id'"
+  "Markup id matched by regex `point-id-regex'"
   (goto-char (or point-point-last-message (point-min)))
   (while (re-search-forward point-id-regex nil t)
     (when (match-string 1)
