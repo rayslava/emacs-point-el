@@ -2,15 +2,15 @@
 
 ;; Copyright (C) 2009  mad
 ;; Copyright (C) 2009  vyazovoi
-;; Copypaste     2010-2011  nextus
-;; Copypaste     2013  rayslava
+;; Copypaste     2010-2011 nextus
+;; Copypaste     2013-2014 rayslava
 
 ;; Author: mad <owner.mad.epa@gmail.com>
 ;; Modification for psto: nextus <txdevel@gmail.com>
 ;; Modification for point: rayslava <rayslava@gmail.com>
 
 ;; Keywords: juick, psto, point
-;; Version: 0.1p
+;; Version: 0.2p
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -101,8 +101,7 @@ Useful for people more reading instead writing")
 Where FROM is jid sender, BUFFER is buffer with message TEXT
 Use FORCE to markup any buffer"
   (if (or force (string-match point-bot-jid from))
-      (save-excursion
-        (set-buffer buffer)
+      (with-current-buffer buffer
         (when (null force)
           (condition-case nil
               (jabber-truncate-top)
@@ -111,7 +110,6 @@ Use FORCE to markup any buffer"
           (setq point-point-last-message
                 (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
 	(point-fix-amps)
-	(message "after-amps")
         (point-markup-user-name)
         (point-markup-id)
         (when (and point-icon-mode window-system)
