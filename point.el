@@ -59,6 +59,26 @@
   "face for displaying user name"
   :group 'point-faces)
 
+(defface point-bold-face
+  '((t (:weight bold)))
+  "face for markdown **text**"
+  :group 'point-faces)
+
+(defface point-italic-face
+  '((t (:slant oblique :weight extra-light)))
+  "face for markdown *text*"
+  :group 'point-faces)
+
+(defface point-quote-face
+  '((t (:foreground "gray")))
+  "face for markdown > text"
+  :group 'point-faces)
+
+(defface point-striked-out-face
+  '((t (:strike-through t :weight bold)))
+  "face for ^W word"
+  :group 'point-faces)
+
 (defvar point-reply-id-add-plus t
   "Set to t then id inserted with + (e.g NNNN+).
 Useful for people more reading instead writing")
@@ -88,6 +108,10 @@ Useful for people more reading instead writing")
 
 (defvar point-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
+(defvar point-bold-regex "\\*\\*\\(.*\\)\\*\\*")
+(defvar point-italic-regex "\\*\\(.*\\)\\*")
+(defvar point-quote-regex "^>\\(.*\\)\\(#\\|^\\)")
+(defvar point-striked-out-regex "\\([[:graph:]]\\)+^[Ww]")
 
 ; Workaround to overcome point &amp bug
 (defvar point-amp-regex "\\(&amp;\\|&\\)#\\([0-9]+\\);")
@@ -112,6 +136,10 @@ Use FORCE to markup any buffer"
 	(point-fix-amps)
         (point-markup-user-name)
         (point-markup-id)
+	(point-markup-bold)
+	(point-markup-italic)
+	(point-markup-quotes)
+	(point-markup-striked-out)
         (when (and point-icon-mode window-system)
           (clear-image-cache)
           (point-avatar-insert)))))
@@ -207,15 +235,42 @@ Use FORCE to markup any buffer"
 (define-key jabber-chat-mode-map "\M-p" 'point-go-to-post-back)
 (define-key jabber-chat-mode-map "\M-n" 'point-go-to-post-forward)
 
+(defmacro point-markup (regex face &optional action)
+  "Generates a markup function which searches for `regex' in text and applies an overlay with `face' to it
+   If `action' is defined button is created over an overlay"
+  `(progn
+     (goto-char (or point-point-last-message (point-min)))
+     (while (re-search-forward ,regex nil t)
+       (when (match-string 1)
+	 (point-add-overlay (match-beginning 1) (match-end 1)
+			    ,face)
+	 ,(when action
+	      `(make-button (match-beginning 1) (match-end 1)
+			    'action ,action))))))
+
 (defun point-markup-user-name ()
   "Markup user-name matched by regex `point-user-name-regex'"
-  (goto-char (or point-point-last-message (point-min)))
-  (while (re-search-forward point-user-name-regex nil t)
-    (when (match-string 1)
-      (point-add-overlay (match-beginning 1) (match-end 1)
-                         'point-user-name-face)
-      (make-button (match-beginning 1) (match-end 1)
-                   'action 'point-insert-user-name))))
+  (point-markup point-user-name-regex 'point-user-name-face 'point-insert-user-name))
+
+(defun point-markup-id ()
+  "Markup id matched by regex `point-id-regex'"
+  (point-markup point-id-regex 'point-id-face 'point-insert-id))
+
+(defun point-markup-bold ()
+  "Markups text matched by regex `point-bold-regex'"
+  (point-markup point-bold-regex 'point-bold-face))
+
+(defun point-markup-italic ()
+  "Markups text matched by regex `point-italic-regex'"
+  (point-markup point-italic-regex 'point-italic-face))
+
+(defun point-markup-quotes ()
+  "Markups text matched by regex `point-quote-regex'"
+  (point-markup point-quote-regex 'point-quote-face))
+
+(defun point-markup-striked-out ()
+  "Markups text matched by regex `point-striked-out-regex'"
+  (point-markup point-striked-out-regex 'point-striked-out-face))
 
 (defun point-fix-amps ()
   "Markup user-name matched by regex `point-amp-regex'"
@@ -229,15 +284,6 @@ Use FORCE to markup any buffer"
       (while (search-forward (car subst-pair) nil t)
 	(replace-match (cdr subst-pair))))))
 
-(defun point-markup-id ()
-  "Markup id matched by regex `point-id-regex'"
-  (goto-char (or point-point-last-message (point-min)))
-  (while (re-search-forward point-id-regex nil t)
-    (when (match-string 1)
-      (point-add-overlay (match-beginning 1) (match-end 1)
-                         'point-id-face)
-      (make-button (match-beginning 1) (match-end 1)
-                   'action 'point-insert-id))))
 
 (defun point-insert-user-name (button)
   "Inserting reply id in conversation buffer"
