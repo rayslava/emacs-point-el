@@ -106,6 +106,12 @@ Useful for people more reading instead writing")
 (if (not (file-directory-p point-tmp-dir))
     (make-directory point-tmp-dir))
 
+;;; Service variables start
+
+(defvar point-last-comins-begin -1)
+(defvar point-last-comins-end -1)
+(defvar point-comment-search-count 1)
+
 (defvar point-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 (defvar point-bold-regex "\\*\\*\\(.*\\)\\*\\*")
@@ -113,7 +119,7 @@ Useful for people more reading instead writing")
 (defvar point-quote-regex "^>\\([[:ascii:]]*?\\)\\(^#\\|\\(?:\n\\{2\\}\\)\\)")
 (defvar point-striked-out-regex "\\([[:graph:]]\\)+^[Ww]")
 
-; Workaround to overcome point &amp bug
+;;; Workaround to overcome point &amp bug
 (defvar point-amp-regex "\\(&amp;\\|&\\)#\\([0-9]+\\);")
 (defvar point-amp-subst-list
   '(("&amp;" . "&")
@@ -422,6 +428,57 @@ Use FORCE to markup any buffer"
 (defun point-go-to-post-forward ()
   (interactive)
   (re-search-forward "^#[A-Za-z0-9\\.\\_\\-]+" nil t))
+
+(defun point-is-ro-at-point (where)
+  (member 'read-only (text-properties-at where)))
+
+(defun point-find-readonly-end ()
+  (save-excursion
+    (end-of-buffer)
+    (let ((curpos (point)))
+      (while (and (not (point-is-ro-at-point curpos))
+                  (> curpos 0))
+        (setq curpos (previous-property-change curpos)))
+      curpos)))
+
+(defun point-do-reply-to-post-comment ()
+  (if (eq last-command 'point-reply-to-post-comment)
+      (setq point-comment-search-count (+ 1 point-comment-search-count ))
+    (setq point-comment-search-count 1))
+  
+  (let ((re (point-find-readonly-end)))
+    (if (point-is-ro-at-point (point))
+        ;; we might be on comment. jump to the next space sym
+        (progn (re-search-forward "\\ ")
+               (goto-char (match-beginning 0)))
+      ;; start searching from editable space (to avoid counting pasted commend)
+      (goto-char re))
+
+    (if (re-search-backward
+         point-id-regex nil t point-comment-search-count)
+        (progn
+          (when (> point-comment-search-count 1)
+            (delete-region point-last-comins-begin point-last-comins-end))
+          (end-of-buffer)
+          (goto-char (+ 4 re)) ;; in jabber-el editable space begins 4 symbols starting from regions border (don't know why)
+          (setq point-last-comins-begin (point))
+          (setq point-last-comins-end (+ 1 (point) (- (match-end 0)
+                                                (match-beginning 0))))
+          (insert-buffer-substring-no-properties (current-buffer)
+                                                 (match-beginning 0)
+                                                 (match-end 0))
+          (insert " "))
+      (message "No comments found"))))
+
+(defun point-reply-to-post-comment()
+  "Searches above the point for comment(post) #foo123/bar1 and
+places it in the beginning of editable region. Further
+invocations cause the insertion of farther comments."
+  (interactive)
+  (save-excursion
+    (point-do-reply-to-post-comment))
+  (end-of-buffer))
+
 
 (provide 'point)
 ;;; point.el ends here
