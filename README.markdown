@@ -61,6 +61,7 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 ### Благодарности
 
 Собственно [@mad'у](http://juick.com/mad) и [@nextus'у](http://nextus.psto.net) за плагин.
+[@4DA](http://4da.point.im/) за функцию ответа на комментарий.
 
 ### Контакты
 Просьба о багах/фичах/etc писать сюда [#axpr](http://point.im/axpr)
