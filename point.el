@@ -46,6 +46,54 @@
 
 (require 'jabber-chatbuffer)
 
+(defvar point-reply-id-add-plus t
+  "Set to t then id inserted with + (e.g NNNN+).
+Useful for people more reading instead writing")
+
+(defvar point-overlays nil)
+
+(defvar point-bot-jid "p@point.im")
+
+(defvar point-image-buffer "*point-avatar-dir*")
+
+(defvar point-point-last-message nil)
+
+(defvar point-avatar-internal-stack nil
+  "Internal var")
+
+(defvar point-avatar-update-day 4
+  "Update (download) avatar after `point-avatar-update-day'")
+
+(defvar point-icon-mode t
+  "This mode display avatar in buffer chat")
+
+(defvar point-tmp-dir
+  (expand-file-name (concat "point-images-" (user-login-name))
+                    temporary-file-directory))
+(if (not (file-directory-p point-tmp-dir))
+    (make-directory point-tmp-dir))
+
+;;; Hotkeys configuration
+
+(define-key jabber-chat-mode-map [mouse-1] 'point-go-url)
+(define-key jabber-chat-mode-map "g" 'point-go-url)
+(define-key jabber-chat-mode-map "п" 'point-go-url)
+
+(define-key jabber-chat-mode-map "s" 'point-go-subscribe)
+(define-key jabber-chat-mode-map "ы" 'point-go-subscribe)
+
+(define-key jabber-chat-mode-map "u" 'point-go-unsubscribe)
+(define-key jabber-chat-mode-map "г" 'point-go-unsubscribe)
+
+(define-key jabber-chat-mode-map "\C-x\M-p" 'point-go-to-nick-back)
+(define-key jabber-chat-mode-map "\C-x\M-n" 'point-go-to-nick-forward)
+
+(define-key jabber-chat-mode-map "\M-p" 'point-go-to-post-back)
+(define-key jabber-chat-mode-map "\M-n" 'point-go-to-post-forward)
+
+(define-key jabber-chat-mode-map "\M-c" 'point-reply-to-post-comment)
+
+;;; Faces for coloring point up
 (defgroup point-faces nil "Faces for displaying Point.im msg"
   :group 'point)
 
@@ -78,33 +126,6 @@
   '((t (:strike-through t :weight bold)))
   "face for ^W word"
   :group 'point-faces)
-
-(defvar point-reply-id-add-plus t
-  "Set to t then id inserted with + (e.g NNNN+).
-Useful for people more reading instead writing")
-
-(defvar point-overlays nil)
-
-(defvar point-bot-jid "p@point.im")
-
-(defvar point-image-buffer "*point-avatar-dir*")
-
-(defvar point-point-last-message nil)
-
-(defvar point-avatar-internal-stack nil
-  "Internal var")
-
-(defvar point-avatar-update-day 4
-  "Update (download) avatar after `point-avatar-update-day'")
-
-(defvar point-icon-mode t
-  "This mode display avatar in buffer chat")
-
-(defvar point-tmp-dir
-  (expand-file-name (concat "point-images-" (user-login-name))
-                    temporary-file-directory))
-(if (not (file-directory-p point-tmp-dir))
-    (make-directory point-tmp-dir))
 
 ;;; Service variables start
 
@@ -224,22 +245,6 @@ Use FORCE to markup any buffer"
                        (kill-buffer (current-buffer))
                        (kill-buffer result-buffer)))
                   (list name))))
-
-(define-key jabber-chat-mode-map [mouse-1] 'point-go-url)
-(define-key jabber-chat-mode-map "g" 'point-go-url)
-(define-key jabber-chat-mode-map "п" 'point-go-url)
-
-(define-key jabber-chat-mode-map "s" 'point-go-subscribe)
-(define-key jabber-chat-mode-map "ы" 'point-go-subscribe)
-
-(define-key jabber-chat-mode-map "u" 'point-go-unsubscribe)
-(define-key jabber-chat-mode-map "г" 'point-go-unsubscribe)
-
-(define-key jabber-chat-mode-map "\C-x\M-p" 'point-go-to-nick-back)
-(define-key jabber-chat-mode-map "\C-x\M-n" 'point-go-to-nick-forward)
-
-(define-key jabber-chat-mode-map "\M-p" 'point-go-to-post-back)
-(define-key jabber-chat-mode-map "\M-n" 'point-go-to-post-forward)
 
 (defmacro point-markup (regex face &optional action)
   "Generates a markup function which searches for `regex' in text and applies an overlay with `face' to it
@@ -470,7 +475,7 @@ Use FORCE to markup any buffer"
           (insert " "))
       (message "No comments found"))))
 
-(defun point-reply-to-post-comment()
+(defun point-reply-to-post-comment ()
   "Searches above the point for comment(post) #foo123/bar1 and
 places it in the beginning of editable region. Further
 invocations cause the insertion of farther comments."
