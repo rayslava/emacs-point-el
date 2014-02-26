@@ -110,7 +110,7 @@ Useful for people more reading instead writing")
 (defvar point-user-name-regex "[^0-9A-Za-z\\.]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 (defvar point-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-italic-regex "\\*\\(.*\\)\\*")
-(defvar point-quote-regex "^>\\(.*\\)\\(#\\|^\\)")
+(defvar point-quote-regex "^>\\([[:ascii:]]*?\\)\\(^#\\|\\(?:\n\\{2\\}\\)\\)")
 (defvar point-striked-out-regex "\\([[:graph:]]\\)+^[Ww]")
 
 ; Workaround to overcome point &amp bug
