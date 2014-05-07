@@ -189,11 +189,10 @@ Use FORCE to markup any buffer"
 (defun point-avatar-insert ()
   (goto-char (or point-point-last-message (point-min)))
   (setq point-avatar-internal-stack nil)
-  (let ((inhibit-read-only t))
-    (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
-      (let* ((name (match-string-no-properties 2))
-             (from (match-beginning 0)))
-        (point-avatar-download name from)))))
+  (while (re-search-forward "\\(: @\\|>[ ]+\n@\\|#[a-z]+ @\\)\\([0-9A-Za-z@\\.\\_\\-]+\\)" nil t) ;; FIXME
+    (let* ((name (match-string-no-properties 2))
+           (from (match-beginning 0)))
+      (point-avatar-download name from))))
 
 (defun point-avatar-download-cb (status name from point-buffer)
   (let* ((result-buffer (current-buffer))
@@ -204,17 +203,17 @@ Use FORCE to markup any buffer"
          (ext-start
           (string-match "\\(jpg\\|png\\)" real-url))
          (ext-end (match-end 0))
-         (ext (substring real-url ext-start ext-end)))
+         (ext (substring real-url ext-start ext-end))
+         (filename (concat point-tmp-dir "/" name "." ext)))
     (delete-region (point-min) (re-search-forward "\n\n" nil t))
-    (write-region (point-min) (point-max)
-                  (concat point-tmp-dir "/" name "." ext))
+    (write-region (point-min) (point-max) filename)
     (kill-buffer (current-buffer))
     (kill-buffer result-buffer)
-    (point-put-avatar name from point-buffer)))
+    (point-put-avatar filename from point-buffer)))
 
-(defun point-put-avatar (name from buffer)
+(defun point-put-avatar (filename from buffer)
   (let* ((icon-string "\n ")
-         (filename (point-avatar-file-check name)))
+         (inhibit-read-only t))
     (with-current-buffer buffer
       (save-excursion
         (goto-char from)
@@ -241,7 +240,7 @@ Use FORCE to markup any buffer"
                  (time-subtract (current-time)
                                 (nth 5 (file-attributes filename))))
                 point-avatar-update-day))
-        (point-put-avatar name from (current-buffer))
+        (point-put-avatar filename from (current-buffer))
       (let* ((size point-avatar-size)
              (avatar-url
               (format "https://point.im/avatar/%s/%d" name size))
