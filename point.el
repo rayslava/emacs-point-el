@@ -228,8 +228,11 @@ Use FORCE to markup any buffer"
                     :file ,filename))
            icon-string)
           (re-search-forward "@" nil t)
-          (goto-char (- (point) 1))
-          (insert (concat icon-string " ")))))))
+          (let* ((begin (- (point) 1))
+                 (end (+ 1 begin (length icon-string))))
+            (goto-char begin)
+            (insert (concat icon-string " "))
+            (add-text-properties begin end '(read-only t))))))))
 
 (defun point-avatar-download (name from)
   "Download avatar from point.im"
