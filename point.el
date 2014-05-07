@@ -43,7 +43,7 @@
 
 (require 'button)
 (require 'browse-url)
-(require 'json)
+
 (require 'jabber-chatbuffer)
 
 (defvar point-reply-id-add-plus t
