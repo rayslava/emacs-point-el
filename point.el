@@ -141,7 +141,7 @@ Useful for people more reading instead writing")
 (defvar point-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-italic-regex "\\*\\(.*\\)\\*")
 (defvar point-quote-regex "^>\\([[:ascii:]]*?\\)\\(^#\\|\\(?:\n\\{2\\}\\)\\)")
-(defvar point-striked-out-regex "\\([[:graph:]]\\)+^[Ww]")
+(defvar point-striked-out-regex "\\([[:graph:]]+\\)^[Ww]")
 
 ;;; Workaround to overcome point &amp bug
 (defvar point-amp-regex "\\(&amp;\\|&\\)#\\([0-9]+\\);")
