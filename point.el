@@ -322,7 +322,7 @@ Use FORCE to markup any buffer"
   "Inserting reply id in conversation buffer"
   (let ((id (buffer-substring-no-properties
              (overlay-start button)
-             (- (re-search-forward "[\n: ]" nil t) 1))))
+             (- (re-search-forward "[\n: )]" nil t) 1))))
     (when (string-match-p (jabber-chat-get-buffer point-bot-jid)
                           (buffer-name))
       (message "Mark set")
