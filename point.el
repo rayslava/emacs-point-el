@@ -143,6 +143,8 @@ Useful for people more reading instead writing")
 (defvar point-quote-regex "^>\\([[:ascii:]]*?\\)\\(^#\\|\\(?:\n\\{2\\}\\)\\)")
 (defvar point-striked-out-regex "\\([[:graph:]]+\\)^[Ww]")
 
+(defvar point-user-name-action-regex "@[0-9A-Za-z@\.\-]+")
+
 ;;; Workaround to overcome point &amp bug
 (defvar point-amp-regex "\\(&amp;\\|&\\)#\\([0-9]+\\);")
 (defvar point-amp-subst-list
@@ -154,25 +156,27 @@ Useful for people more reading instead writing")
   "Markup message from `point-bot-jid'.
 Where FROM is jid sender, BUFFER is buffer with message TEXT
 Use FORCE to markup any buffer"
-  (if (or force (string-match point-bot-jid from))
-      (with-current-buffer buffer
-        (when (null force)
-          (condition-case nil
-              (jabber-truncate-top)
-            (wrong-number-of-arguments
-             (jabber-truncate-top buffer)))
-          (setq point-point-last-message
-                (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
-	(point-fix-amps)
-        (point-markup-user-name)
-        (point-markup-id)
-	(point-markup-bold)
-	(point-markup-italic)
-	(point-markup-quotes)
-	(point-markup-striked-out)
-        (when (and point-icon-mode window-system)
-          (clear-image-cache)
-          (point-avatar-insert)))))
+  (let ((pos (point)))
+    (if (or force (string-match point-bot-jid from))
+        (with-current-buffer buffer
+          (when (null force)
+            (condition-case nil
+                (jabber-truncate-top)
+              (wrong-number-of-arguments
+               (jabber-truncate-top buffer)))
+            (setq point-point-last-message
+                  (re-search-backward "\\[[0-9]+:[0-9]+\\].*>" nil t)))
+          (point-fix-amps)
+          (point-markup-user-name)
+          (point-markup-id)
+          (point-markup-bold)
+          (point-markup-italic)
+          (point-markup-quotes)
+          (point-markup-striked-out)
+          (when (and point-icon-mode window-system)
+            (clear-image-cache)
+            (point-avatar-insert))))
+    (goto-char pos)))
 
 (add-hook 'jabber-alert-message-hooks 'point-markup-chat)
 
@@ -412,14 +416,14 @@ Use FORCE to markup any buffer"
 
 (defun point-go-subscribe ()
      (interactive)
-     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
+     (if (or (looking-at "#[a-z]+") (looking-at point-user-name-action-regex))
          (point-send-message point-bot-jid
                              (concat "S " (match-string-no-properties 0)))
        (self-insert-command 1)))
 
 (defun point-go-unsubscribe ()
      (interactive)
-     (if (or (looking-at "#[a-z]+") (looking-at "@[0-9A-Za-z@\.\-]+"))
+     (if (or (looking-at "#[a-z]+") (looking-at point-user-name-action-regex))
          (point-send-message point-bot-jid
                              (concat "U " (match-string-no-properties 0)))
        (self-insert-command 1)))
@@ -458,7 +462,7 @@ Use FORCE to markup any buffer"
   (if (eq last-command 'point-reply-to-post-comment)
       (setq point-comment-search-count (+ 1 point-comment-search-count ))
     (setq point-comment-search-count 1))
-  
+
   (let ((re (point-find-readonly-end)))
     (if (point-is-ro-at-point (point))
         ;; we might be on comment. jump to the next space sym
@@ -492,6 +496,131 @@ invocations cause the insertion of farther comments."
     (point-do-reply-to-post-comment))
   (end-of-buffer))
 
+
+(defmacro define-point-send-action (action-name re-list text-proc)
+  `(defun ,action-name ()
+     (interactive)
+     (if (some 'thing-at-point-looking-at ,re-list)
+         (point-send-message point-bot-jid
+                             (funcall ,text-proc (match-string-no-properties 0)))
+       (self-insert-command 1))))
+
+(define-point-send-action point-user-info
+  `(,point-user-name-action-regex)
+  'identity)
+
+(define-point-send-action point-user-subscribe
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "S " s)))
+
+(define-point-send-action point-user-subscribe-recs
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "S! " s)))
+
+(define-point-send-action point-user-unsubscribe
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "U " s)))
+
+(define-point-send-action point-user-unsubscribe-recs
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "U! " s)))
+
+(defun screen-tag (tag)
+    (if (string-match " " tag)
+        (concat "*" tag)
+      tag))
+
+(define-point-send-action point-user-tag
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat s " *" (call-interactively
+                    (lambda (tag)
+                      (interactive "suser tag: ")
+                      (screen-tag
+                       tag))))))
+
+(define-point-send-action point-user-subscribe-tag
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "S " s " *" (call-interactively
+                         (lambda (tag)
+                           (interactive "suser tag: ")
+                           (screen-tag
+                            tag))))))
+
+(define-point-send-action point-user-unsubscribe-tag
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "U " s " *" (call-interactively
+                         (lambda (tag)
+                           (interactive "suser tag: ")
+                           (screen-tag
+                            tag))))))
+
+(define-point-send-action point-user-wl
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "WL " s)))
+
+(define-point-send-action point-user-uwl
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "UWL " s)))
+
+(define-point-send-action point-user-bl
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "BL " s)))
+
+(define-point-send-action point-user-ubl
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "UBL " s)))
+
+(define-point-send-action point-user-bl-tag
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "BL " s " *" (call-interactively
+                         (lambda (tag)
+                           (interactive "suser tag: ")
+                           (screen-tag
+                            tag))))))
+
+(define-point-send-action point-user-ubl-tag
+  `(,point-user-name-action-regex)
+  (lambda (s)
+    (concat "UBL " s " *" (call-interactively
+                         (lambda (tag)
+                           (interactive "suser tag: ")
+                           (screen-tag
+                            tag))))))
+
+;; TODO: tags, posts, menu depends on context
+
+(setq point-user-menu
+  `(("User info" . point-user-info)
+    ("User tags" . point-user-tag)
+    ("Subscribe" . point-user-subscribe)
+    ("Subscribe to recommendations" . point-user-subscribe-recs)
+    ("Subscribe to user's tag" . point-user-subscribe-tag)
+    ("Unsubscribe" . point-user-unsubscribe)
+    ("Unsubscribe from recommendations" . point-user-unsubscribe-recs)
+    ("Unsubscribe from user's tag" . point-user-unsubscribe-tag)
+    ("Add to whitelist" . point-user-wl)
+    ("Delete from blacklist" . point-user-uwl)
+    ("Add to blacklist" . point-user-bl)
+    ("Delete from blacklist" . point-user-bl)))
+
+(defun point-popup-user-menu ()
+  "Popup user menu"
+  (interactive)
+  (jabber-popup-menu point-user-menu))
+
+(define-key jabber-common-keymap "\C-c\C-p" 'point-popup-user-menu)
 
 (provide 'point)
 ;;; point.el ends here
