@@ -1,4 +1,5 @@
 ;;; point.el --- p@point.im
+;; Package-Version: 0
 
 ;; Loosely based on https://github.com/rayslava/emacs-point-el
 
@@ -18,6 +19,7 @@
 (require 'cl-lib)
 (require 'browse-url)
 (require 'jabber-chatbuffer)
+(require 'jabber-keymap)
 
 ;; faces
 (defgroup point-faces nil "Faces for displaying Point.im msg"
@@ -228,24 +230,27 @@ Useful for people more reading instead writing")
 (point-simple-action point-bl "BL")
 (point-simple-action point-ubl "UBL")
 (point-simple-action point-wl "WL")
-(point-simple-action point-wl "UWL")
+(point-simple-action point-uwl "UWL")
 (point-simple-action point-recommend "!")
 (point-simple-action point-delete "D")
 (point-simple-action point-pin "pin")
 (point-simple-action point-unpin "unpin")
 
 (defvar point-highlight-keymap
-  (let ((m (make-sparse-keymap)))
-    (define-key m (kbd "<mouse-2>") 'point-go-url)
-    (define-key m (kbd "g") 'point-go-url)
-    (define-key m (kbd "b") 'point-bl)
-    (define-key m (kbd "w") 'point-wl)
-    (define-key m (kbd "u") 'point-unsubscribe)
-    (define-key m (kbd "s") 'point-subscribe)
-    (define-key m (kbd "d") 'point-delete)
-    (define-key m (kbd "RET") 'point-insert)
-    (define-key m (kbd "!") 'point-recommend)
-    m)
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (set-keymap-parent map jabber-common-keymap)
+    (define-key map (kbd "<mouse-2>") 'point-go-url)
+    (define-key map (kbd "C-c C-a") 'point-go-url)
+    (define-key map (kbd "g") 'point-go-url)
+    (define-key map (kbd "b") 'point-bl)
+    (define-key map (kbd "w") 'point-wl)
+    (define-key map (kbd "u") 'point-unsubscribe)
+    (define-key map (kbd "s") 'point-subscribe)
+    (define-key map (kbd "d") 'point-delete)
+    (define-key map (kbd "RET") 'point-insert)
+    (define-key map (kbd "!") 'point-recommend)
+    map)
   "Keymap to hold point.el key defs under highlighted IDs.")
 
 ;; popup menus
