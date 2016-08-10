@@ -77,4 +77,4 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 [@4DA](http://4da.point.im/) за функцию ответа на комментарий.
 
 ### Контакты
-Просьба о багах/фичах/etc писать сюда [#oojslq](http://point.im/oojslq)
+Просьба о багах/фичах/etc писать сюда [#oojslq](https://point.im/oojslq)

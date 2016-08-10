@@ -1,5 +1,4 @@
 ;;; point.el --- p@point.im
-;; Package-Version: 0
 
 ;; Loosely based on https://github.com/rayslava/emacs-point-el
 
@@ -273,6 +272,7 @@ Useful for people more reading instead writing")
 (defvar point-id-menu
   `(("Open in browser" . point-go-url)
     ("Info" . point-info)
+    ("Delete" . point-delete)
     ("Subscribe" . point-subscribe)
     ("Unsubscribe" . point-unsubscribe)
     ("Pin" . point-pin)
