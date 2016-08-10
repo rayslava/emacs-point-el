@@ -27,9 +27,10 @@
     (use-package point
       :ensure nil
       :quelpa
-      (point :url "https://raw.githubusercontent.com/a13/point.el/master/point.el" :fetcher url :version original)
+      (point :repo "a13/point.el" :fetcher github :version original)
       :config
       (setq point-reply-id-add-plus nil))
+
 
 -------------------------------------------------------------------------------
 
@@ -56,14 +57,7 @@
 переместиться на позицию где вы были (удобно когда приходит много сообщений и
 по мере чтения отвечать на них)
 
-~~### Аватарки
 
-За отображения аватарок отвечает переменная `point-icon-mode`, если она имеет
-значение t, то они отображаются. В противном случае - нет (по умолчанию t).
-
-По умолчанию аватарки сохраняются в `/tmp/point-images-<user name>/`, за
-это отвечает переменная `point-tmp-dir`.
-~~
 # Дополнительно
 
 Это дополнение тестировалось на jabber-el 0.8.92.
@@ -83,4 +77,4 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 [@4DA](http://4da.point.im/) за функцию ответа на комментарий.
 
 ### Контакты
-Просьба о багах/фичах/etc писать сюда [#axpr](http://point.im/axpr)
+Просьба о багах/фичах/etc писать сюда [#oojslq](http://point.im/oojslq)
