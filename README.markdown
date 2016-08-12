@@ -15,21 +15,21 @@
 
 Загрузите последнюю версию:
 
-    git clone git://github.com/a13/point.el.git
+    git clone git://github.com/a13/point-im.el.git
 
 Добавьте следующие строки в ваш инициализационный файл:
 
-    (add-to-list 'load-path "path/to/point.el/")
-    (require 'point)
+    (add-to-list 'load-path "path/to/point-im.el/")
+    (require 'point-im)
 
 Если используются пакеты use-package, quelpa и quelpa-use-package, можно сделать так:
 
-    (use-package point
+    (use-package point-im
       :ensure nil
       :quelpa
-      (point :repo "a13/point.el" :fetcher github :version original)
+      (point-im :repo "a13/point-im.el" :fetcher github :version original)
       :config
-      (setq point-reply-id-add-plus nil))
+      (setq point-im-reply-id-add-plus nil))
 
 
 -------------------------------------------------------------------------------
@@ -61,7 +61,7 @@
 # Дополнительно
 
 Это дополнение тестировалось на jabber-el 0.8.92.
-В текстовом интерфейсе работает. Естественно, без аватарок.
+В текстовом интерфейсе работает.
 
 **ВНИМАНИЕ**
 
@@ -73,8 +73,8 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 
 ### Благодарности
 
-Собственно [@mad'у](http://juick.com/mad) и [@nextus'у](http://nextus.psto.net) за плагин.
-[@4DA](http://4da.point.im/) за функцию ответа на комментарий.
+Собственно [@mad'у](https://juick.com/mad) и [@nextus'у](https://nextus.psto.net) за плагин.
+[@4DA](https://4da.point.im/) за функцию ответа на комментарий, [@rayslava](https://rayslava.point.im/).
 
 ### Контакты
 Просьба о багах/фичах/etc писать сюда [#oojslq](https://point.im/oojslq)
