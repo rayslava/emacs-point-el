@@ -21,6 +21,7 @@
 
     (add-to-list 'load-path "path/to/point-im.el/")
     (require 'point-im)
+    (point-im-mode t)
 
 Если используются пакеты use-package, quelpa и quelpa-use-package, можно сделать так:
 
@@ -29,7 +30,8 @@
       :quelpa
       (point-im :repo "a13/point-im.el" :fetcher github :version original)
       :config
-      (setq point-im-reply-id-add-plus nil))
+      (setq point-im-reply-id-add-plus nil)
+      (point-im-mode t))
 
 
 -------------------------------------------------------------------------------
