@@ -197,11 +197,13 @@ See `jabber-chat-printers' for full documentation."
     (if point-im-mode
         (progn
           (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
-          (with-current-buffer point-im-buf
-            (point-im-fontify)))
+          (when point-im-buf
+            (with-current-buffer point-im-buf
+              (point-im-fontify))))
       (progn
-        (with-current-buffer point-im-buf
-          (point-im-unfontify))
+        (when point-im-buf
+          (with-current-buffer point-im-buf
+            (point-im-unfontify)))
         (delete 'point-im-jabber-chat-printer jabber-chat-printers)))))
 
 (defun point-im-prop-at-point (prop-name)
