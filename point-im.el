@@ -268,6 +268,26 @@ See `jabber-chat-printers' for full documentation."
 (point-im--simple-action point-im-pin "pin")
 (point-im--simple-action point-im-unpin "unpin")
 
+(defmacro point-im--moving-action (name search-fn re)
+  "Create action NAME using SEARCH-FN applied to RE."
+  `(defun ,name (count)
+     (interactive "P")
+     (funcall ,search-fn ,re nil t (or count 1))
+     (let ((to (match-beginning 1)))
+       (when to
+         (goto-char to)))))
+
+(point-im--moving-action point-im-id-backward
+                         #'re-search-backward point-im-id-regex)
+(point-im--moving-action point-im-id-forward
+                         #'re-search-forward point-im-id-regex)
+
+(point-im--moving-action point-im-user-name-backward
+                         #'re-search-backward point-im-user-name-regex)
+(point-im--moving-action point-im-user-name-forward
+                         #'re-search-forward point-im-user-name-regex)
+
+
 ;; popup menus
 (defvar point-im-user-menu
   `(("Open in browser" . point-im-go-url)
@@ -330,6 +350,11 @@ See `jabber-chat-printers' for full documentation."
     (define-key map (kbd "C-c C-p") #'point-im-popup-menu)
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
+
+(define-key jabber-chat-mode-map "\C-x\M-p" 'point-im-user-name-backward)
+(define-key jabber-chat-mode-map "\C-x\M-n" 'point-im-user-name-forward)
+(define-key jabber-chat-mode-map "\M-p" 'point-im-id-backward)
+(define-key jabber-chat-mode-map "\M-n" 'point-im-id-forward)
 
 (provide 'point-im)
 
