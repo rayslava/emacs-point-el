@@ -83,7 +83,7 @@ Useful for people more reading instead writing")
 (defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
-(defvar point-im-quote-regex "^>\\([[:ascii:]]*?\\)\\(^#\\|\\(?:\n\\{2\\}\\)\\)")
+(defvar point-im-quote-regex "^>.*\n?[^\n]+")
 (defvar point-im-striked-out-regex "\\([[:graph:]]+\\)^[Ww]")
 
 (defun point-im--send-message (to text)
