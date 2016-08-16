@@ -268,23 +268,6 @@ See `jabber-chat-printers' for full documentation."
 (point-im--simple-action point-im-pin "pin")
 (point-im--simple-action point-im-unpin "unpin")
 
-;; bindings
-(defvar point-im-highlight-keymap
-  (let ((map (make-sparse-keymap)))
-    (suppress-keymap map)
-    (set-keymap-parent map jabber-common-keymap)
-    (define-key map (kbd "<mouse-2>") 'point-im-go-url)
-    (define-key map (kbd "g") 'point-im-go-url)
-    (define-key map (kbd "b") 'point-im-bl)
-    (define-key map (kbd "w") 'point-im-wl)
-    (define-key map (kbd "u") 'point-im-unsubscribe)
-    (define-key map (kbd "s") 'point-im-subscribe)
-    (define-key map (kbd "d") 'point-im-delete)
-    (define-key map (kbd "RET") 'point-im-insert)
-    (define-key map (kbd "!") 'point-im-recommend)
-    map)
-  "Keymap to hold point-im.el key defs under highlighted IDs.")
-
 ;; popup menus
 (defvar point-im-user-menu
   `(("Open in browser" . point-im-go-url)
@@ -330,7 +313,23 @@ See `jabber-chat-printers' for full documentation."
       (`user (jabber-popup-menu point-im-user-menu))
       (`id (jabber-popup-menu point-im-id-menu)))))
 
-(define-key jabber-common-keymap "\C-c\C-p" 'point-im-popup-menu)
+;; bindings
+(defvar point-im-highlight-keymap
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (set-keymap-parent map jabber-common-keymap)
+    (define-key map (kbd "<mouse-2>") #'point-im-go-url)
+    (define-key map (kbd "g") #'point-im-go-url)
+    (define-key map (kbd "b") #'point-im-bl)
+    (define-key map (kbd "w") #'point-im-wl)
+    (define-key map (kbd "u") #'point-im-unsubscribe)
+    (define-key map (kbd "s") #'point-im-subscribe)
+    (define-key map (kbd "d") #'point-im-delete)
+    (define-key map (kbd "RET") #'point-im-insert)
+    (define-key map (kbd "!") #'point-im-recommend)
+    (define-key map (kbd "C-c C-p") #'point-im-popup-menu)
+    map)
+  "Keymap to hold point-im.el key defs under highlighted IDs.")
 
 (provide 'point-im)
 
