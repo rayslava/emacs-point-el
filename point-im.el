@@ -97,7 +97,7 @@ Useful for people more reading instead writing")
       (jabber-chat-buffer-send))))
 
 (defun point-im-unfontify (&optional start end)
-  "Remove `point' overlay from the given region from START to END."
+  "Remove point-im overlay from the given region from START to END."
   (interactive)
   (let ((start (or start (point-min)))
         (end (or end (point-max))))
@@ -125,15 +125,14 @@ Useful for people more reading instead writing")
       (whatever nil))))
 
 (cl-defun point-im--propertize (start end re face &key mouse-face help-echo keymap commands type)
-  ;;   "Create and propertize all regions matching `re' with
-  ;; `face', `mouse-face', `help-echo' and `keymap' properties"
+  "Create and propertize all regions from START to END matching RE with
+FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
   (goto-char start)
   (while (re-search-forward re end t)
     (let* ((s (match-beginning 0))
            (e (match-end 0))
            (m (match-string-no-properties 1))
            this-overlay)
-      ;; (message "found %s" m)
       (setq this-overlay (make-overlay s e))
       (overlay-put this-overlay 'face face)
       (overlay-put this-overlay 'evaporate t)
@@ -178,7 +177,7 @@ If both are nil, from begin to the end of the buffer)."
 
 (defun point-im-jabber-chat-printer (xml-data who mode)
   "Call `point-fontify' on the newly written text.
-don't care about XML-DATA and WHO, MODE should be :insert.
+Don't care about XML-DATA and WHO, MODE should be :insert.
 See `jabber-chat-printers' for full documentation."
   (when (eq mode :insert)
     (ignore-errors
@@ -275,7 +274,6 @@ See `jabber-chat-printers' for full documentation."
     (suppress-keymap map)
     (set-keymap-parent map jabber-common-keymap)
     (define-key map (kbd "<mouse-2>") 'point-im-go-url)
-    (define-key map (kbd "C-c C-a") 'point-im-go-url)
     (define-key map (kbd "g") 'point-im-go-url)
     (define-key map (kbd "b") 'point-im-bl)
     (define-key map (kbd "w") 'point-im-wl)
