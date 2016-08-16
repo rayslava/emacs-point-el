@@ -299,9 +299,13 @@ Search COUNT ids back and inserts at `jabber-point-insert'."
 
 (defvar point-im--comment-search-count 1)
 
+(defvar point-im-reply-goto-end t
+  "Go to the end of buffer after inserting id.")
+
 (defun point-im-reply-to-post-comment (count)
   "Search COUNT or one #ids back and insert at `jabber-point-insert'.
-Further invocations cause the insertion of farther comments."
+Further invocations cause the insertion of farther comments.
+When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (interactive "P")
   (save-excursion
     (setq point-im--comment-search-count
@@ -310,7 +314,9 @@ Further invocations cause the insertion of farther comments."
              (if (eq last-command #'point-im-reply-to-post-comment)
                  point-im--comment-search-count
                0)))
-    (point-im--do-reply-to-post-comment point-im--comment-search-count)))
+    (point-im--do-reply-to-post-comment point-im--comment-search-count))
+  (when point-im-reply-goto-end
+    (goto-char (point-max))))
 
 ;; popup menus
 (defvar point-im-user-menu
