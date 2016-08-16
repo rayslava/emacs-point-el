@@ -287,6 +287,30 @@ See `jabber-chat-printers' for full documentation."
 (point-im--moving-action point-im-user-name-forward
                          #'re-search-forward point-im-user-name-regex)
 
+(defun point-im--do-reply-to-post-comment (count)
+  "Helper function.
+Search COUNT ids back and inserts at `jabber-point-insert'."
+  (if (re-search-backward point-im-id-regex nil t count)
+      (progn
+        (delete-region jabber-point-insert (point-max))
+        (goto-char jabber-point-insert)
+        (insert (concat (match-string-no-properties 1) " ")))
+    (message "No comments found")))
+
+(defvar point-im--comment-search-count 1)
+
+(defun point-im-reply-to-post-comment (count)
+  "Search COUNT or one #ids back and insert at `jabber-point-insert'.
+Further invocations cause the insertion of farther comments."
+  (interactive "P")
+  (save-excursion
+    (setq point-im--comment-search-count
+          (+ 1
+             (or count 0)
+             (if (eq last-command #'point-im-reply-to-post-comment)
+                 point-im--comment-search-count
+               0)))
+    (point-im--do-reply-to-post-comment point-im--comment-search-count)))
 
 ;; popup menus
 (defvar point-im-user-menu
@@ -351,10 +375,11 @@ See `jabber-chat-printers' for full documentation."
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
 
-(define-key jabber-chat-mode-map "\C-x\M-p" 'point-im-user-name-backward)
-(define-key jabber-chat-mode-map "\C-x\M-n" 'point-im-user-name-forward)
-(define-key jabber-chat-mode-map "\M-p" 'point-im-id-backward)
-(define-key jabber-chat-mode-map "\M-n" 'point-im-id-forward)
+(define-key jabber-chat-mode-map (kbd "C-x M-p") #'point-im-user-name-backward)
+(define-key jabber-chat-mode-map (kbd "C-x M-n") #'point-im-user-name-forward)
+(define-key jabber-chat-mode-map (kbd "M-p") #'point-im-id-backward)
+(define-key jabber-chat-mode-map (kbd "M-n") #'point-im-id-forward)
+(define-key jabber-chat-mode-map (kbd "M-RET") #'point-im-reply-to-post-comment)
 
 (provide 'point-im)
 
