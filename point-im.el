@@ -145,7 +145,7 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
       (overlay-put this-overlay 'point-im t)
       ;; only for the link
       (when (and m type)
-        (overlay-put this-overlay 'url (point-im--make-url m type))
+        (point-im--overlay-put this-overlay 'url (point-im--make-url m type))
         (overlay-put this-overlay 'follow-link t)
         (overlay-put this-overlay 'goto-address t)
         (if mouse-face
@@ -246,7 +246,7 @@ See `jabber-chat-printers' for full documentation."
       (point-im--send-message point-im-bot-jid
                           (funcall text-proc matched-text)))))
 
-(defmacro point-im--simple-action (name prefix)
+(defmacro def-simple-action (name prefix)
   "Make an action NAME for a simple PREFIX command."
   `(defun ,name ()
      (interactive)
@@ -254,21 +254,21 @@ See `jabber-chat-printers' for full documentation."
       (lambda (s)
         (concat ,prefix " " s)))))
 
-(point-im--simple-action point-im-subscribe "S")
-(point-im--simple-action point-im-info "")
-(point-im--simple-action point-im-subscribe-recs "S!")
-(point-im--simple-action point-im-unsubscribe "U")
-(point-im--simple-action point-im-unsubscribe-recs "U!")
-(point-im--simple-action point-im-bl "BL")
-(point-im--simple-action point-im-ubl "UBL")
-(point-im--simple-action point-im-wl "WL")
-(point-im--simple-action point-im-uwl "UWL")
-(point-im--simple-action point-im-recommend "!")
-(point-im--simple-action point-im-delete "D")
-(point-im--simple-action point-im-pin "pin")
-(point-im--simple-action point-im-unpin "unpin")
+(def-simple-action point-im-subscribe "S")
+(def-simple-action point-im-info "")
+(def-simple-action point-im-subscribe-recs "S!")
+(def-simple-action point-im-unsubscribe "U")
+(def-simple-action point-im-unsubscribe-recs "U!")
+(def-simple-action point-im-bl "BL")
+(def-simple-action point-im-ubl "UBL")
+(def-simple-action point-im-wl "WL")
+(def-simple-action point-im-uwl "UWL")
+(def-simple-action point-im-recommend "!")
+(def-simple-action point-im-delete "D")
+(def-simple-action point-im-pin "pin")
+(def-simple-action point-im-unpin "unpin")
 
-(defmacro point-im--moving-action (name search-fn re)
+(defmacro def-moving-action (name search-fn re)
   "Create action NAME using SEARCH-FN applied to RE."
   `(defun ,name (count)
      (interactive "P")
@@ -277,15 +277,15 @@ See `jabber-chat-printers' for full documentation."
        (when to
          (goto-char to)))))
 
-(point-im--moving-action point-im-id-backward
-                         #'re-search-backward point-im-id-regex)
-(point-im--moving-action point-im-id-forward
-                         #'re-search-forward point-im-id-regex)
+(def-moving-action point-im-id-backward
+  #'re-search-backward point-im-id-regex)
+(def-moving-action point-im-id-forward
+  #'re-search-forward point-im-id-regex)
 
-(point-im--moving-action point-im-user-name-backward
-                         #'re-search-backward point-im-user-name-regex)
-(point-im--moving-action point-im-user-name-forward
-                         #'re-search-forward point-im-user-name-regex)
+(def-moving-action point-im-user-name-backward
+  #'re-search-backward point-im-user-name-regex)
+(def-moving-action point-im-user-name-forward
+  #'re-search-forward point-im-user-name-regex)
 
 (defun point-im--do-reply-to-post-comment (count)
   "Helper function.
@@ -357,11 +357,10 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 (defun point-im-popup-menu ()
   "Popup menu."
   (interactive)
-  (let ((type (point-im-prop-at-point 'type)))
-    (pcase type
-      (`tag (jabber-popup-menu point-im-tag-menu))
-      (`user (jabber-popup-menu point-im-user-menu))
-      (`id (jabber-popup-menu point-im-id-menu)))))
+  (pcase (point-im-prop-at-point 'type)
+    (`tag (jabber-popup-menu point-im-tag-menu))
+    (`user (jabber-popup-menu point-im-user-menu))
+    (`id (jabber-popup-menu point-im-id-menu))))
 
 ;; bindings
 (defvar point-im-highlight-keymap
