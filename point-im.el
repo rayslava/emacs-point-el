@@ -383,7 +383,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     (define-key map (kbd "M-n") #'point-im-id-forward)
     (define-key map (kbd "M-RET") #'point-im-reply-to-post-comment)
     map)
-  "Keymap for point-im-mode")3
+  "Keymap for point-im-mode")
 
 ;; Avy integration
 (when (require 'avy nil t)
