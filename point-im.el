@@ -158,6 +158,18 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
             (overlay-put this-overlay 'mouse-face mf)))
         (point-im--overlay-put this-overlay 'help-echo help-echo)))))
 
+(defvar point-im-re-face-alist
+  `((,point-im-id-regex point-im-id-face :type id)
+    (,point-im-user-name-regex point-im-user-name-face :type user)
+    (,point-im-italic-regex point-im-italic-face)
+    (,point-im-bold-regex point-im-bold-face)
+    (,point-im-tag-regex point-im-tag-face :type tag)
+    (,point-im-quote-regex point-im-quote-face)
+    (,point-im-striked-out-regex point-im-striked-out-face)
+    (,point-im-striked-out-regex point-im-striked-out-face)
+    (,point-im-md-striked-out-regex point-im-striked-out-face))
+  "Alist of elements (RE FACE-SYMBOL &key ...).
+For keyword arguments see `point-im-fontify'")
 
 (defun point-im-fontify (&optional start end)
   "Fontify entities in the region between START and END.
@@ -168,24 +180,8 @@ If both are nil, from begin to the end of the buffer)."
     (point-im-unfontify start end)
     (save-excursion
       (let ((inhibit-point-motion-hooks t))
-        (point-im--propertize
-         start end point-im-id-regex 'point-im-id-face :type 'id)
-        (point-im--propertize
-         start end point-im-user-name-regex 'point-im-user-name-face :type 'user)
-        (point-im--propertize
-         start end point-im-italic-regex 'point-im-italic-face)
-        (point-im--propertize
-         start end point-im-bold-regex 'point-im-bold-face)
-        (point-im--propertize
-         start end point-im-tag-regex 'point-im-tag-face :type 'tag)
-        (point-im--propertize
-         start end point-im-quote-regex 'point-im-quote-face)
-        (point-im--propertize
-         start end point-im-striked-out-regex 'point-im-striked-out-face)
-        (point-im--propertize
-         start end point-im-striked-out-regex 'point-im-striked-out-face)
-        (point-im--propertize
-         start end point-im-md-striked-out-regex 'point-im-striked-out-face)))))
+        (dolist (fontify-args point-im-re-face-alist)
+          (apply #'point-im--propertize start end fontify-args))))))
 
 (defun point-im-jabber-chat-printer (xml-data who mode)
   "Call `point-fontify' on the newly written text.
