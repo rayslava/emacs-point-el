@@ -387,24 +387,21 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 
 ;; Avy integration
 (when (require 'avy nil t)
-  (defmacro def-point-im-avy-jump (name re style &rest body)
-    `(defun ,name ()
-       (interactive)
-       (avy--generic-jump ,re nil ,style)
-       ,@body))
-  (def-point-im-avy-jump
-    point-im-avy-goto-id point-im-id-regex 'pre)
-  (def-point-im-avy-jump
-    point-im-avy-goto-id-insert point-im-id-regex 'pre
-    (point-im-insert))
-  (def-point-im-avy-jump
-    point-im-avy-goto-user-name point-im-user-name-regex 'pre)
-  (def-point-im-avy-jump
-    point-im-avy-goto-user-name-insert point-im-user-name-regex 'pre
-    (point-im-insert))
+  (defmacro def-point-im-avy-jump (name re)
+    `(defun ,name (do-not-insert)
+       "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
+       (interactive "P")
+       (avy--generic-jump ,re nil 'pre)
+       (unless do-not-insert
+         ;; We don't want a plus here
+         (let ((point-im-reply-id-add-plus nil))
+           (point-im-insert)))))
 
-  (define-key point-im-keymap (kbd "M-g i") #'point-im-avy-goto-id-insert)
-  (define-key point-im-keymap (kbd "M-g u") #'point-im-avy-goto-user-name-insert))
+  (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
+  (def-point-im-avy-jump point-im-avy-goto-user-name point-im-user-name-regex)
+
+  (define-key point-im-keymap (kbd "M-g i") #'point-im-avy-goto-id)
+  (define-key point-im-keymap (kbd "M-g u") #'point-im-avy-goto-user-name))
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
