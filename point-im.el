@@ -410,18 +410,16 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   "Toggle Point mode."
   :lighter " ℗"
   :keymap point-im-keymap
-  (let ((point-im-buf (jabber-chat-get-buffer point-im-bot-jid)))
+  (if (equal (jabber-chat-get-buffer point-im-bot-jid)
+             (buffer-name))
     (if point-im-mode
         (progn
           (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
-          (when point-im-buf
-            (with-current-buffer point-im-buf
-              (point-im-fontify))))
+          (point-im-fontify))
       (progn
-        (when point-im-buf
-          (with-current-buffer point-im-buf
-            (point-im-unfontify)))
-        (delete 'point-im-jabber-chat-printer jabber-chat-printers)))))
+        (point-im-unfontify)
+        (delete 'point-im-jabber-chat-printer jabber-chat-printers)))
+    (setq point-im-mode nil)))
 
 (provide 'point-im)
 
