@@ -15,11 +15,11 @@
 
 Загрузите последнюю версию:
 
-    git clone git://github.com/a13/point-im.el.git
+    git clone git://github.com/rayslava/emacs-point-el.git
 
 Добавьте следующие строки в ваш инициализационный файл:
 
-    (add-to-list 'load-path "path/to/point-im.el/")
+    (add-to-list 'load-path "path/to/emacs-point-el/")
     (require 'point-im)
     (point-im-mode t)
 
@@ -28,7 +28,7 @@
     (use-package point-im
       :ensure nil
       :quelpa
-      (point-im :repo "a13/point-im.el" :fetcher github :version original)
+      (point-im :repo "rayslava/emacs-point-el" :fetcher github :version original)
       :config
       (setq point-im-reply-id-add-plus nil)
       (point-im-mode t))
@@ -79,4 +79,4 @@ C jabber-el 0.7.1 и ниже плагин не работает!
 [@4DA](https://4da.point.im/) за функцию ответа на комментарий, [@rayslava](https://rayslava.point.im/).
 
 ### Контакты
-Просьба о багах/фичах/etc писать сюда [#oojslq](https://point.im/oojslq)
+Просьба о багах/фичах/etc писать сюда [#oojslq](https://point.im/oojslq). В самом [#oojslq](https://point.im/oojslq) сплошная ложь — мержреквест прислан и принят.
