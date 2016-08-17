@@ -27,6 +27,7 @@
 (require 'cl-lib)
 (require 'browse-url)
 (require 'jabber-menu)
+(require 'jabber-chat)
 (require 'jabber-chatbuffer)
 (require 'jabber-keymap)
 
@@ -85,6 +86,7 @@ Useful for people more reading instead writing")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
 (defvar point-im-quote-regex "^>.*\n?[^\n]+")
 (defvar point-im-striked-out-regex "\\([[:graph:]]+\\)^[Ww]")
+(defvar point-im-md-striked-out-regex "~~\\([[:graph:]]+\\)~~")
 
 (defun point-im--send-message (to text)
   "Send to TO TEXT immediately."
@@ -166,14 +168,24 @@ If both are nil, from begin to the end of the buffer)."
     (point-im-unfontify start end)
     (save-excursion
       (let ((inhibit-point-motion-hooks t))
-        (point-im--propertize start end point-im-id-regex 'point-im-id-face :type 'id)
-        (point-im--propertize start end point-im-user-name-regex 'point-im-user-name-face :type 'user)
-        (point-im--propertize start end point-im-italic-regex 'point-im-italic-face)
-        (point-im--propertize start end point-im-bold-regex 'point-im-bold-face)
-        (point-im--propertize start end point-im-tag-regex 'point-im-tag-face :type 'tag)
-        (point-im--propertize start end point-im-quote-regex 'point-im-quote-face)
-        (point-im--propertize start end point-im-striked-out-regex 'point-im-striked-out-face)))))
-
+        (point-im--propertize
+         start end point-im-id-regex 'point-im-id-face :type 'id)
+        (point-im--propertize
+         start end point-im-user-name-regex 'point-im-user-name-face :type 'user)
+        (point-im--propertize
+         start end point-im-italic-regex 'point-im-italic-face)
+        (point-im--propertize
+         start end point-im-bold-regex 'point-im-bold-face)
+        (point-im--propertize
+         start end point-im-tag-regex 'point-im-tag-face :type 'tag)
+        (point-im--propertize
+         start end point-im-quote-regex 'point-im-quote-face)
+        (point-im--propertize
+         start end point-im-striked-out-regex 'point-im-striked-out-face)
+        (point-im--propertize
+         start end point-im-striked-out-regex 'point-im-striked-out-face)
+        (point-im--propertize
+         start end point-im-md-striked-out-regex 'point-im-striked-out-face)))))
 
 (defun point-im-jabber-chat-printer (xml-data who mode)
   "Call `point-fontify' on the newly written text.
