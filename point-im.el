@@ -80,7 +80,7 @@ Useful for people more reading instead writing")
 
 ;; regexes, first matched group will be fontified
 (defvar point-im-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
-(defvar point-im-user-name-regex "[[:space:]]\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
+(defvar point-im-user-name-regex "\\B\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 (defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
@@ -390,11 +390,34 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
 
+;; TODO: bind to point-im-mode only
 (define-key jabber-chat-mode-map (kbd "C-x M-p") #'point-im-user-name-backward)
 (define-key jabber-chat-mode-map (kbd "C-x M-n") #'point-im-user-name-forward)
 (define-key jabber-chat-mode-map (kbd "M-p") #'point-im-id-backward)
 (define-key jabber-chat-mode-map (kbd "M-n") #'point-im-id-forward)
 (define-key jabber-chat-mode-map (kbd "M-RET") #'point-im-reply-to-post-comment)
+
+;; Avy integration
+(when (require 'avy nil t)
+  (defmacro def-point-im-avy-jump (name re style &rest body)
+    `(defun ,name ()
+       (interactive)
+       (avy--generic-jump ,re nil ,style)
+       ,@body))
+  (def-point-im-avy-jump
+    point-im-avy-goto-id point-im-id-regex 'pre)
+  (def-point-im-avy-jump
+    point-im-avy-goto-id-insert point-im-id-regex 'pre
+    (point-im-insert))
+  (def-point-im-avy-jump
+    point-im-avy-goto-user-name point-im-user-name-regex 'pre)
+  (def-point-im-avy-jump
+    point-im-avy-goto-user-name-insert point-im-user-name-regex 'pre
+    (point-im-insert))
+
+  (define-key jabber-chat-mode-map (kbd "M-g i") #'point-im-avy-goto-id-insert)
+  (define-key jabber-chat-mode-map (kbd "M-g u") #'point-im-avy-goto-user-name-insert))
+
 
 (provide 'point-im)
 
