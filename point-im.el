@@ -197,22 +197,6 @@ See `jabber-chat-printers' for full documentation."
         ;; using `field-beginning'.
         (point-im-fontify (field-beginning nil nil limit) end)))))
 
-(define-minor-mode point-im-mode
-  "Toggle Point mode."
-  :lighter " ℗"
-  (let ((point-im-buf (jabber-chat-get-buffer point-im-bot-jid)))
-    (if point-im-mode
-        (progn
-          (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
-          (when point-im-buf
-            (with-current-buffer point-im-buf
-              (point-im-fontify))))
-      (progn
-        (when point-im-buf
-          (with-current-buffer point-im-buf
-            (point-im-unfontify)))
-        (delete 'point-im-jabber-chat-printer jabber-chat-printers)))))
-
 (defun point-im-prop-at-point (prop-name)
   "Get an overlay property PROP-NAME at point."
   (let (prop)
@@ -364,9 +348,9 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("Add to blacklist" . point-im-bl)
     ("Delete from blacklist" . point-im-ubl)))
 
-(defun point-im-popup-menu ()
-  "Popup menu."
-  (interactive)
+(defun point-im-popup-menu (prefix)
+  "Popup menu. If PREFIX is mouse event - popup mouse menu."
+  (interactive "P")
   (pcase (point-im-prop-at-point 'type)
     (`tag (jabber-popup-menu point-im-tag-menu))
     (`user (jabber-popup-menu point-im-user-menu))
@@ -387,37 +371,57 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     (define-key map (kbd "RET") #'point-im-insert)
     (define-key map (kbd "!") #'point-im-recommend)
     (define-key map (kbd "C-c C-p") #'point-im-popup-menu)
+    (define-key map (kbd "<mouse-3>") #'point-im-popup-menu)
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
 
-;; TODO: bind to point-im-mode only
-(define-key jabber-chat-mode-map (kbd "C-x M-p") #'point-im-user-name-backward)
-(define-key jabber-chat-mode-map (kbd "C-x M-n") #'point-im-user-name-forward)
-(define-key jabber-chat-mode-map (kbd "M-p") #'point-im-id-backward)
-(define-key jabber-chat-mode-map (kbd "M-n") #'point-im-id-forward)
-(define-key jabber-chat-mode-map (kbd "M-RET") #'point-im-reply-to-post-comment)
+(defvar point-im-keymap
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map jabber-chat-mode-map)
+    (define-key map (kbd "C-x M-p") #'point-im-user-name-backward)
+    (define-key map (kbd "C-x M-n") #'point-im-user-name-forward)
+    (define-key map (kbd "M-p") #'point-im-id-backward)
+    (define-key map (kbd "M-n") #'point-im-id-forward)
+    (define-key map (kbd "M-RET") #'point-im-reply-to-post-comment)
+    map)
+  "Keymap for point-im-mode")
 
 ;; Avy integration
 (when (require 'avy nil t)
-  (defmacro def-point-im-avy-jump (name re style &rest body)
-    `(defun ,name ()
-       (interactive)
-       (avy--generic-jump ,re nil ,style)
-       ,@body))
-  (def-point-im-avy-jump
-    point-im-avy-goto-id point-im-id-regex 'pre)
-  (def-point-im-avy-jump
-    point-im-avy-goto-id-insert point-im-id-regex 'pre
-    (point-im-insert))
-  (def-point-im-avy-jump
-    point-im-avy-goto-user-name point-im-user-name-regex 'pre)
-  (def-point-im-avy-jump
-    point-im-avy-goto-user-name-insert point-im-user-name-regex 'pre
-    (point-im-insert))
+  (defmacro def-point-im-avy-jump (name re)
+    `(defun ,name (do-not-insert)
+       "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
+       (interactive "P")
+       ;; `avy--generic-jump' returns t on C-g
+       (let* ((jump-result (avy--generic-jump ,re nil 'pre))
+             (interrupted (eq t jump-result)))
+         (unless (or do-not-insert interrupted)
+           ;; We don't want a plus here
+           (let ((point-im-reply-id-add-plus nil))
+             (point-im-insert))))))
 
-  (define-key jabber-chat-mode-map (kbd "M-g i") #'point-im-avy-goto-id-insert)
-  (define-key jabber-chat-mode-map (kbd "M-g u") #'point-im-avy-goto-user-name-insert))
+  (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
+  (def-point-im-avy-jump point-im-avy-goto-user-name point-im-user-name-regex)
+  (def-point-im-avy-jump point-im-avy-tag-name point-im-tag-regex)
 
+  (define-key point-im-keymap (kbd "M-g i") #'point-im-avy-goto-id)
+  (define-key point-im-keymap (kbd "M-g u") #'point-im-avy-goto-user-name)
+  (define-key point-im-keymap (kbd "M-g t") #'point-im-avy-tag-name))
+
+(define-minor-mode point-im-mode
+  "Toggle Point mode."
+  :lighter " ℗"
+  :keymap point-im-keymap
+  (if (equal (jabber-chat-get-buffer point-im-bot-jid)
+             (buffer-name))
+    (if point-im-mode
+        (progn
+          (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
+          (point-im-fontify))
+      (progn
+        (point-im-unfontify)
+        (delete 'point-im-jabber-chat-printer jabber-chat-printers)))
+    (setq point-im-mode nil)))
 
 (provide 'point-im)
 
