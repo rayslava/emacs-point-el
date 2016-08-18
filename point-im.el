@@ -348,9 +348,9 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("Add to blacklist" . point-im-bl)
     ("Delete from blacklist" . point-im-ubl)))
 
-(defun point-im-popup-menu ()
-  "Popup menu."
-  (interactive)
+(defun point-im-popup-menu (prefix)
+  "Popup menu. If PREFIX is mouse event - popup mouse menu."
+  (interactive "P")
   (pcase (point-im-prop-at-point 'type)
     (`tag (jabber-popup-menu point-im-tag-menu))
     (`user (jabber-popup-menu point-im-user-menu))
@@ -371,6 +371,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     (define-key map (kbd "RET") #'point-im-insert)
     (define-key map (kbd "!") #'point-im-recommend)
     (define-key map (kbd "C-c C-p") #'point-im-popup-menu)
+    (define-key map (kbd "<mouse-3>") #'point-im-popup-menu)
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
 
