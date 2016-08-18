@@ -114,7 +114,7 @@ Useful for people more reading instead writing")
 (defun point-im--overlay-put (overlay prop value)
   "Set one property of overlay OVERLAY: give property PROP value VALUE only if VALUE is not nil.  VALUE will be returned."
   (when value
-      (overlay-put overlay prop value)))
+    (overlay-put overlay prop value)))
 
 (defun point-im--make-url (m type)
   "Make an URL from matched text M according to TYPE."
@@ -123,7 +123,7 @@ Useful for people more reading instead writing")
       (`tag (concat "https://point.im/?tag=" m*))
       (`user (concat "https://" m* ".point.im/" ))
       (`id (concat "https://point.im/"
-                    (replace-regexp-in-string "/" "#" m*)))
+                   (replace-regexp-in-string "/" "#" m*)))
       (whatever nil))))
 
 (cl-defun point-im--propertize (start end re face &key mouse-face help-echo keymap commands type)
@@ -169,7 +169,7 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
     (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-md-striked-out-regex point-im-striked-out-face))
   "Alist of elements (RE FACE-SYMBOL &key ...).
-For keyword arguments see `point-im-fontify'")
+For keyword arguments see `point-im--propertize'")
 
 (defun point-im-fontify (&optional start end)
   "Fontify entities in the region between START and END.
@@ -189,13 +189,12 @@ Don't care about XML-DATA and WHO, MODE should be :insert.
 See `jabber-chat-printers' for full documentation."
   (when (eq mode :insert)
     (ignore-errors
-      (require 'point-im)
-      (let ((end (point))
-            (limit (max (- (point) 10000) (1+ (point-min)))))
+      (let* ((end (point))
+             (limit (max (- (point) 30000) (1+ (point-min)))))
         ;; We only need to fontify the text written since the last
         ;; prompt.  The prompt has a field property, so we can find it
         ;; using `field-beginning'.
-        (point-im-fontify (field-beginning nil nil limit) end)))))
+        (point-im-fontify (field-beginning nil t limit) end)))))
 
 (defun point-im-prop-at-point (prop-name)
   "Get an overlay property PROP-NAME at point."
@@ -236,7 +235,7 @@ See `jabber-chat-printers' for full documentation."
   (let ((matched-text (point-im-matched-at-point)))
     (when matched-text
       (point-im--send-message point-im-bot-jid
-                          (funcall text-proc matched-text)))))
+                              (funcall text-proc matched-text)))))
 
 (defmacro def-simple-action (name prefix)
   "Make an action NAME for a simple PREFIX command."
@@ -349,7 +348,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("Delete from blacklist" . point-im-ubl)))
 
 (defun point-im-popup-menu (prefix)
-  "Popup menu. If PREFIX is mouse event - popup mouse menu."
+  "Popup menu.  If PREFIX is mouse event - popup mouse menu."
   (interactive "P")
   (pcase (point-im-prop-at-point 'type)
     (`tag (jabber-popup-menu point-im-tag-menu))
@@ -384,7 +383,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     (define-key map (kbd "M-n") #'point-im-id-forward)
     (define-key map (kbd "M-RET") #'point-im-reply-to-post-comment)
     map)
-  "Keymap for point-im-mode")
+  "Keymap for `point-im-mode'.")
 
 ;; Avy integration
 (when (require 'avy nil t)
@@ -394,7 +393,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
        (interactive "P")
        ;; `avy--generic-jump' returns t on C-g
        (let* ((jump-result (avy--generic-jump ,re nil 'pre))
-             (interrupted (eq t jump-result)))
+              (interrupted (eq t jump-result)))
          (unless (or do-not-insert interrupted)
            ;; We don't want a plus here
            (let ((point-im-reply-id-add-plus nil))
@@ -414,13 +413,13 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   :keymap point-im-keymap
   (if (equal (jabber-chat-get-buffer point-im-bot-jid)
              (buffer-name))
-    (if point-im-mode
+      (if point-im-mode
+          (progn
+            (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
+            (point-im-fontify))
         (progn
-          (add-to-list 'jabber-chat-printers 'point-im-jabber-chat-printer t)
-          (point-im-fontify))
-      (progn
-        (point-im-unfontify)
-        (delete 'point-im-jabber-chat-printer jabber-chat-printers)))
+          (point-im-unfontify)
+          (delete 'point-im-jabber-chat-printer jabber-chat-printers)))
     (setq point-im-mode nil)))
 
 (provide 'point-im)
