@@ -264,26 +264,33 @@ See `jabber-chat-printers' for full documentation."
 (def-simple-action point-im-pin "pin")
 (def-simple-action point-im-unpin "unpin")
 
-(defmacro def-moving-action (name search-fn re &optional forward)
+(defmacro def-moving-action (name search-fn re)
   "Create action NAME using SEARCH-FN applied to RE.
 If FORWARD is true - search one match further."
   `(defun ,name (count)
      (interactive "P")
-     (funcall ,search-fn ,re nil t (+ (or count 1)
-                                      (if ,forward 1 0)))
-     (let ((to (match-beginning 1)))
-       (when to
-         (goto-char to)))))
+     (let* ((pos (point))
+            (count (or count 1))
+            (search
+             (lambda (count)
+               (funcall ,search-fn ,re nil t count)
+               (let ((target (match-beginning 1)))
+                 (and (not (eq target pos))
+                      target)))))
+       (goto-char
+        (or (funcall search count)
+            (funcall search count)
+            pos)))))
 
 (def-moving-action point-im-id-backward
   #'re-search-backward point-im-id-regex)
 (def-moving-action point-im-id-forward
-  #'re-search-forward point-im-id-regex t)
+  #'re-search-forward point-im-id-regex)
 
 (def-moving-action point-im-user-name-backward
   #'re-search-backward point-im-user-name-regex)
 (def-moving-action point-im-user-name-forward
-  #'re-search-forward point-im-user-name-regex t)
+  #'re-search-forward point-im-user-name-regex)
 
 (defun point-im--do-reply-to-post-comment (count)
   "Helper function.
