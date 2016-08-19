@@ -227,8 +227,8 @@ See `jabber-chat-printers' for full documentation."
       ;; usually #NNNN supposed #NNNN+
       (if (string-match "/" id)
           (insert (concat id " "))
-        (insert (concat id (if point-im-reply-id-add-plus "+" " ")))))
-    (recenter 10)))
+        (insert (concat id (if point-im-reply-id-add-plus "+" " "))))
+      (recenter 10))))
 
 (defun point-im--send-action (text-proc)
   "Send a matched-text processed by TEXT-PROC."
@@ -405,7 +405,10 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (def-point-im-avy-jump point-im-avy-goto-any
     (concat "\\("
             (mapconcat 'identity
-                       (list point-im-id-regex point-im-user-name-regex point-im-tag-regex)
+                       (list point-im-id-regex
+                             point-im-user-name-regex
+                             point-im-tag-regex
+                             goto-address-url-regexp)
                        "\\|")
             "\\)"))
 
