@@ -422,7 +422,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
   (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
   (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-goto-tag)
-  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any)
+  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any))
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
