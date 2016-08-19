@@ -401,11 +401,18 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 (when (require 'avy nil t)
   (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
   (def-point-im-avy-jump point-im-avy-goto-user-name point-im-user-name-regex)
-  (def-point-im-avy-jump point-im-avy-tag-name point-im-tag-regex)
+  (def-point-im-avy-jump point-im-avy-goto-tag point-im-tag-regex)
+  (def-point-im-avy-jump point-im-avy-goto-any
+    (concat "\\("
+            (mapconcat 'identity
+                       (list point-im-id-regex point-im-user-name-regex point-im-tag-regex)
+                       "\\|")
+            "\\)"))
 
   (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
   (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
-  (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-tag-name))
+  (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-goto-tag)
+  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any))
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
