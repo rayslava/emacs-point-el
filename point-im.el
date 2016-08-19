@@ -291,7 +291,7 @@ If FORWARD is true - search one match further."
 (def-moving-action point-im-user-name-backward
   #'re-search-backward point-im-user-name-regex)
 (def-moving-action point-im-user-name-forward
-  #'re-search-forward point-im-user-name-regex)
+  #'re-search-forward point-im-user-name-regex t)
 
 (defun point-im--do-reply-to-post-comment (count)
   "Helper function.
