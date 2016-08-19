@@ -210,7 +210,8 @@ See `jabber-chat-printers' for full documentation."
 (defun point-im-go-url ()
   "Open entity URL in browser using `browse-url'."
   (interactive)
-  (let ((url (point-im-prop-at-point 'url)))
+  (let ((url (or (point-im-prop-at-point 'url)
+                 (browse-url-url-at-point))))
     (when url
       (browse-url url)
       (unless (string= last-command "mouse-drag-region")
@@ -390,7 +391,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   "Keymap for `point-im-mode'.")
 
 ;; Avy integration
-(defmacro def-point-im-avy-jump (name re &rest alt-body)
+(defmacro def-point-im-avy-jump (name re)
   `(defun ,name (do-not-insert)
      "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
      (interactive "P")
@@ -402,7 +403,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
          (let ((point-im-reply-id-add-plus nil))
            (or
             (point-im-insert)
-            ,@alt-body))))))
+            (point-im-go-url)))))))
 
 (when (require 'avy nil t)
   (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
@@ -416,8 +417,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
                              point-im-tag-regex
                              goto-address-url-regexp)
                        "\\|")
-            "\\)")
-    (browse-url-at-point))
+            "\\)"))
 
   (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
   (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
