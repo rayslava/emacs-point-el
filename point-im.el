@@ -265,8 +265,7 @@ See `jabber-chat-printers' for full documentation."
 (def-simple-action point-im-unpin "unpin")
 
 (defmacro def-moving-action (name search-fn re)
-  "Create action NAME using SEARCH-FN applied to RE.
-If FORWARD is true - search one match further."
+  "Create action NAME using SEARCH-FN applied to RE."
   `(defun ,name (count)
      (interactive "P")
      (let* ((pos (point))
