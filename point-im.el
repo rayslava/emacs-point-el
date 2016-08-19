@@ -225,10 +225,14 @@ See `jabber-chat-printers' for full documentation."
       (push-mark)
       (goto-char (point-max))
       ;; usually #NNNN supposed #NNNN+
-      (if (string-match "/" id)
-          (insert (concat id " "))
-        (insert (concat id (if point-im-reply-id-add-plus "+" " "))))
-      (recenter 10))))
+      (insert
+       (concat id
+               (if (and point-im-reply-id-add-plus
+                       (not (string-match "/" id)))
+                   "+"
+                 " ")))
+      (recenter 10)
+      t)))
 
 (defun point-im--send-action (text-proc)
   "Send a matched-text processed by TEXT-PROC."
@@ -386,7 +390,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   "Keymap for `point-im-mode'.")
 
 ;; Avy integration
-(defmacro def-point-im-avy-jump (name re)
+(defmacro def-point-im-avy-jump (name re &rest alt-body)
   `(defun ,name (do-not-insert)
      "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
      (interactive "P")
@@ -396,7 +400,9 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
        (unless (or do-not-insert interrupted)
          ;; We don't want a plus here
          (let ((point-im-reply-id-add-plus nil))
-           (point-im-insert))))))
+           (or
+            (point-im-insert)
+            ,@alt-body))))))
 
 (when (require 'avy nil t)
   (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
@@ -410,12 +416,13 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
                              point-im-tag-regex
                              goto-address-url-regexp)
                        "\\|")
-            "\\)"))
+            "\\)")
+    (browse-url-at-point))
 
   (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
   (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
   (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-goto-tag)
-  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any))
+  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any)
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
