@@ -210,7 +210,8 @@ See `jabber-chat-printers' for full documentation."
 (defun point-im-go-url ()
   "Open entity URL in browser using `browse-url'."
   (interactive)
-  (let ((url (point-im-prop-at-point 'url)))
+  (let ((url (or (point-im-prop-at-point 'url)
+                 (browse-url-url-at-point))))
     (when url
       (browse-url url)
       (unless (string= last-command "mouse-drag-region")
@@ -225,10 +226,14 @@ See `jabber-chat-printers' for full documentation."
       (push-mark)
       (goto-char (point-max))
       ;; usually #NNNN supposed #NNNN+
-      (if (string-match "/" id)
-          (insert (concat id " "))
-        (insert (concat id (if point-im-reply-id-add-plus "+" " ")))))
-    (recenter 10)))
+      (insert
+       (concat id
+               (if (and point-im-reply-id-add-plus
+                       (not (string-match "/" id)))
+                   "+"
+                 " ")))
+      (recenter 10)
+      t)))
 
 (defun point-im--send-action (text-proc)
   "Send a matched-text processed by TEXT-PROC."
@@ -264,11 +269,19 @@ See `jabber-chat-printers' for full documentation."
 If FORWARD is true - search one match further."
   `(defun ,name (count)
      (interactive "P")
-     (funcall ,search-fn ,re nil t (+ (or count 1)
-                                      (if ,forward 1 0)))
-     (let ((to (match-beginning 1)))
-       (when to
-         (goto-char to)))))
+     (let* ((pos (point))
+            (count (+ (or count 1)
+                      ,(if forward 1 0)))
+            (search
+             (lambda (count)
+               (funcall ,search-fn ,re nil t count)
+               (let ((target (match-beginning 1)))
+                 (and (not (eq target pos))
+                      target)))))
+       (goto-char
+        (or (funcall search count)
+            (funcall search count)
+            pos)))))
 
 (def-moving-action point-im-id-backward
   #'re-search-backward point-im-id-regex)
@@ -386,26 +399,38 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   "Keymap for `point-im-mode'.")
 
 ;; Avy integration
-(when (require 'avy nil t)
-  (defmacro def-point-im-avy-jump (name re)
-    `(defun ,name (do-not-insert)
-       "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
-       (interactive "P")
-       ;; `avy--generic-jump' returns t on C-g
-       (let* ((jump-result (avy--generic-jump ,re nil 'pre))
-              (interrupted (eq t jump-result)))
-         (unless (or do-not-insert interrupted)
-           ;; We don't want a plus here
-           (let ((point-im-reply-id-add-plus nil))
-             (point-im-insert))))))
+(defmacro def-point-im-avy-jump (name re)
+  `(defun ,name (do-not-insert)
+     "Avy jump to id, insert into conversation buffer unless DO-NOT-INSERT."
+     (interactive "P")
+     ;; `avy--generic-jump' returns t on C-g
+     (let* ((jump-result (avy--generic-jump ,re nil 'pre))
+            (interrupted (eq t jump-result)))
+       (unless (or do-not-insert interrupted)
+         ;; We don't want a plus here
+         (let ((point-im-reply-id-add-plus nil))
+           (or
+            (point-im-insert)
+            (point-im-go-url)))))))
 
+(when (require 'avy nil t)
   (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
   (def-point-im-avy-jump point-im-avy-goto-user-name point-im-user-name-regex)
-  (def-point-im-avy-jump point-im-avy-tag-name point-im-tag-regex)
+  (def-point-im-avy-jump point-im-avy-goto-tag point-im-tag-regex)
+  (def-point-im-avy-jump point-im-avy-goto-any
+    (concat "\\("
+            (mapconcat 'identity
+                       (list point-im-id-regex
+                             point-im-user-name-regex
+                             point-im-tag-regex
+                             goto-address-url-regexp)
+                       "\\|")
+            "\\)"))
 
   (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
   (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
-  (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-tag-name))
+  (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-goto-tag)
+  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any))
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
