@@ -450,3 +450,47 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 (provide 'point-im)
 
 ;;; point-im.el ends here
+
+(defun point-im-compose (jc)
+  "Create a buffer for composing a message."
+  (interactive (list (jabber-read-account)))
+
+  (let ((matched-text (point-im-matched-at-point)))
+    (with-current-buffer (get-buffer-create
+                          (generate-new-buffer-name
+                           (concat "Point-Compose"
+                                   (when matched-text
+                                     (format "-%s" matched-text)))))
+      (set (make-local-variable 'jabber-widget-alist) nil)
+      (setq jabber-buffer-connection jc)
+      (use-local-map widget-keymap)
+
+      (insert (jabber-propertize "Compose Point.im message\n" 'face 'jabber-title-large))
+
+;;      (insert (substitute-command-keys "\\<widget-field-keymap>Completion available with \\[widget-complete].\n"))
+
+      (insert "\nText:\n")
+      (push (cons :text
+                  (widget-create 'text :value (if matched-text
+                                                  (concat matched-text " ")
+                                                "")))
+            jabber-widget-alist)
+
+      (insert "\n")
+      (widget-create 'push-button :notify #'point-im-compose-send "Send")
+
+      (widget-setup)
+      ;;      (widget-apply (cdr (assq :text jabber-widget-alist)) :activate)
+      (let ((to (widget-field-end (cdr (assq :text jabber-widget-alist)))))
+        (and to (goto-char to)))
+      (switch-to-buffer-other-window (current-buffer)))))
+
+
+(defun point-im-compose-send (&rest ignore)
+  (let ((text (widget-value (cdr (assq :text jabber-widget-alist)))))
+
+    (jabber-send-message jabber-buffer-connection point-im-bot-jid "" text nil))
+
+  (bury-buffer)
+  (delete-window)
+  (message "Message sent"))
