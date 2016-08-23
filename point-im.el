@@ -354,8 +354,9 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (delete-window))
 
 (defvar point-im-compose-mode-map (make-sparse-keymap)
-  "Fake keymap for sending message."
-  (define-key point-im-compose-mode-map (kbd "C-c C-c") #'point-im-compose-send))
+  "Fake keymap for sending message.")
+
+(define-key point-im-compose-mode-map (kbd "C-c C-c") #'point-im-compose-send)
 
 (define-minor-mode point-im-compose-mode
   "Minor mode to simulate buffer local keybindings."
