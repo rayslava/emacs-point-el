@@ -324,6 +324,44 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (when point-im-reply-goto-end
     (goto-char (point-max))))
 
+;; Composing messages in external markdown/text buffer
+(defun point-im-compose (jc)
+  "Create a buffer for composing a message."
+  (interactive (list (jabber-read-account)))
+  (let ((matched-text (point-im-matched-at-point)))
+    (with-current-buffer (get-buffer-create
+                          (generate-new-buffer-name
+                           (concat "Point-Compose"
+                                   (when matched-text
+                                     (format "-%s" matched-text)))))
+      (insert (if matched-text (concat matched-text " ") ""))
+      (if (require 'markdown-mode nil t)
+          (funcall 'markdown-mode)
+        (funcall 'text-mode))
+      (point-im-compose-mode t)
+      (setq jabber-buffer-connection jc)
+      (switch-to-buffer-other-window (current-buffer))
+      (message (substitute-command-keys "\\<point-im-compose-mode-map>\\[point-im-compose-send] to send.")))))
+
+(defun point-im-compose-send ()
+  "Send buffer contents to bot."
+  (interactive)
+  (let ((text (buffer-string)))
+    (when (< 0 (length text))
+      (jabber-send-message jabber-buffer-connection point-im-bot-jid "" text nil)
+      (message "Message sent")))
+  (bury-buffer)
+  (delete-window))
+
+(defvar point-im-compose-mode-map (make-sparse-keymap)
+  "Fake keymap for sending message."
+  (define-key point-im-compose-mode-map (kbd "C-c C-c") #'point-im-compose-send))
+
+(define-minor-mode point-im-compose-mode
+  "Minor mode to simulate buffer local keybindings."
+  :init-value nil)
+
+
 ;; popup menus
 (defvar point-im-user-menu
   `(("Open in browser" . point-im-go-url)
@@ -395,6 +433,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     (define-key map (kbd "M-p") #'point-im-id-backward)
     (define-key map (kbd "M-n") #'point-im-id-forward)
     (define-key map (kbd "M-RET") #'point-im-reply-to-post-comment)
+    (define-key map (kbd "C-c C-e") #'point-im-compose)
     map)
   "Keymap for `point-im-mode'.")
 
@@ -450,43 +489,3 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 (provide 'point-im)
 
 ;;; point-im.el ends here
-
-(defun point-im-compose (jc)
-  "Create a buffer for composing a message."
-  (interactive (list (jabber-read-account)))
-
-  (let ((matched-text (point-im-matched-at-point)))
-    (with-current-buffer (get-buffer-create
-                          (generate-new-buffer-name
-                           (concat "Point-Compose"
-                                   (when matched-text
-                                     (format "-%s" matched-text)))))
-      (insert (if matched-text (concat matched-text " ") ""))
-      (if (require 'markdown-mode nil t)
-          (funcall 'markdown-mode)
-        (funcall 'text-mode))
-      (point-im-compose-mode t)
-      (setq jabber-buffer-connection jc)
-      (switch-to-buffer-other-window (current-buffer))
-      (message (substitute-command-keys "\\<point-im-compose-mode-map>\\[point-im-compose-send] to send.")))))
-
-
-(defun point-im-compose-send ()
-  (interactive)
-  (let ((text (buffer-string)))
-    (when (< 0 (length text))
-      (jabber-send-message jabber-buffer-connection point-im-bot-jid "" text nil)
-
-      (message "Message sent")))
-
-  (bury-buffer)
-  (delete-window))
-
-(defvar point-im-compose-mode-map (make-sparse-keymap)
-  "Fake keymap for sending message.")
-
-(define-minor-mode point-im-compose-mode
-  "Minor mode to simulate buffer local keybindings."
-  :init-value nil)
-
-(define-key point-im-compose-mode-map (kbd "C-c C-c") #'point-im-compose-send)
