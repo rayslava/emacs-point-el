@@ -437,7 +437,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
     (set-keymap-parent map jabber-common-keymap)
-    (define-keys map point-im-highlight-keymap-alist)
+    (point-im-define-keys map point-im-highlight-keymap-alist)
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
 
@@ -452,7 +452,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
 (defvar point-im-keymap
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map jabber-chat-mode-map)
-    (define-keys map point-im-keymap-alist)
+    (point-im-define-keys map point-im-keymap-alist)
     map)
   "Keymap for `point-im-mode'.")
 
@@ -490,7 +490,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
                              goto-address-url-regexp)
                        "\\|")
             "\\)"))
-  (define-keys point-im-keymap point-im-avy-keymap-alist))
+  (point-im-define-keys point-im-keymap point-im-avy-keymap-alist))
 
 
 (define-minor-mode point-im-mode
