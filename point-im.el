@@ -82,6 +82,7 @@ Useful for people more reading instead writing")
 (defvar point-im-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-im-user-name-regex "\\B\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 (defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
+(defvar point-im-stag-regex  "[[:space:]]\\(\\*\\*[^\\*]+?\\*\\*\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
 (defvar point-im-quote-regex "^>.*\n?[^\n]+")
@@ -116,6 +117,12 @@ Useful for people more reading instead writing")
   (when value
     (overlay-put overlay prop value)))
 
+(defun point-im--prepare-stag (tag)
+  "Convert TAG with spaces to GET parameter."
+  (let ((stripped (substring tag 2 -2)))
+    (replace-regexp-in-string "[[:space:]]+" "+" stripped)))
+
+
 (defun point-im--make-url (m type)
   "Make an URL from matched text M according to TYPE."
   (let ((m* (substring m 1)))
@@ -124,6 +131,7 @@ Useful for people more reading instead writing")
       (`user (concat "https://" m* ".point.im/" ))
       (`id (concat "https://point.im/"
                    (replace-regexp-in-string "/" "#" m*)))
+      (`stag (concat "https://point.im/?tag=" (point-im--prepare-stag m)))
       (whatever nil))))
 
 (cl-defun point-im--propertize (start end re face &key mouse-face help-echo keymap commands type)
@@ -164,6 +172,7 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
     (,point-im-italic-regex point-im-italic-face)
     (,point-im-bold-regex point-im-bold-face)
     (,point-im-tag-regex point-im-tag-face :type tag)
+    (,point-im-stag-regex point-im-tag-face :type stag)
     (,point-im-quote-regex point-im-quote-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
@@ -200,7 +209,9 @@ See `jabber-chat-printers' for full documentation."
   "Get an overlay property PROP-NAME at point."
   (let (prop)
     (dolist (overlay (overlays-at (point)) prop)
-      (setq prop (overlay-get overlay prop-name)))
+      (let ((p (overlay-get overlay prop-name)))
+        (when p
+          (setq prop p))))
     prop))
 
 (defun point-im-matched-at-point ()
@@ -406,6 +417,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (interactive "P")
   (pcase (point-im-prop-at-point 'type)
     (`tag (jabber-popup-menu point-im-tag-menu))
+    (`stag (jabber-popup-menu point-im-tag-menu))
     (`user (jabber-popup-menu point-im-user-menu))
     (`id (jabber-popup-menu point-im-id-menu))))
 
