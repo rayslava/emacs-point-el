@@ -82,6 +82,7 @@ Useful for people more reading instead writing")
 (defvar point-im-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-im-user-name-regex "\\B\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
 (defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
+(defvar point-im-stag-regex  "[[:space:]]\\(\\*\\*[^\\*]+?\\*\\*\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
 (defvar point-im-quote-regex "^>.*\n?[^\n]+")
@@ -116,6 +117,12 @@ Useful for people more reading instead writing")
   (when value
     (overlay-put overlay prop value)))
 
+(defun point-im--prepare-stag (tag)
+  "Convert TAG with spaces to GET parameter."
+  (let ((stripped (substring tag 2 -2)))
+    (replace-regexp-in-string "[[:space:]]+" "+" stripped)))
+
+
 (defun point-im--make-url (m type)
   "Make an URL from matched text M according to TYPE."
   (let ((m* (substring m 1)))
@@ -124,6 +131,7 @@ Useful for people more reading instead writing")
       (`user (concat "https://" m* ".point.im/" ))
       (`id (concat "https://point.im/"
                    (replace-regexp-in-string "/" "#" m*)))
+      (`stag (concat "https://point.im/?tag=" (point-im--prepare-stag m)))
       (whatever nil))))
 
 (cl-defun point-im--propertize (start end re face &key mouse-face help-echo keymap commands type)
@@ -164,6 +172,7 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
     (,point-im-italic-regex point-im-italic-face)
     (,point-im-bold-regex point-im-bold-face)
     (,point-im-tag-regex point-im-tag-face :type tag)
+    (,point-im-stag-regex point-im-tag-face :type stag)
     (,point-im-quote-regex point-im-quote-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
@@ -200,7 +209,9 @@ See `jabber-chat-printers' for full documentation."
   "Get an overlay property PROP-NAME at point."
   (let (prop)
     (dolist (overlay (overlays-at (point)) prop)
-      (setq prop (overlay-get overlay prop-name)))
+      (let ((p (overlay-get overlay prop-name)))
+        (when p
+          (setq prop p))))
     prop))
 
 (defun point-im-matched-at-point ()
@@ -242,27 +253,29 @@ See `jabber-chat-printers' for full documentation."
       (point-im--send-message point-im-bot-jid
                               (funcall text-proc matched-text)))))
 
-(defmacro def-simple-action (name prefix)
-  "Make an action NAME for a simple PREFIX command."
+(defmacro def-simple-action (name fmt)
+  "Make an action NAME for a simple command using FMT format string."
   `(defun ,name ()
      (interactive)
      (point-im--send-action
       (lambda (s)
-        (concat ,prefix " " s)))))
+        (format ,fmt s)))))
 
-(def-simple-action point-im-subscribe "S")
-(def-simple-action point-im-info "")
-(def-simple-action point-im-subscribe-recs "S!")
-(def-simple-action point-im-unsubscribe "U")
-(def-simple-action point-im-unsubscribe-recs "U!")
-(def-simple-action point-im-bl "BL")
-(def-simple-action point-im-ubl "UBL")
-(def-simple-action point-im-wl "WL")
-(def-simple-action point-im-uwl "UWL")
-(def-simple-action point-im-recommend "!")
-(def-simple-action point-im-delete "D")
-(def-simple-action point-im-pin "pin")
-(def-simple-action point-im-unpin "unpin")
+
+(def-simple-action point-im-subscribe "S %s")
+(def-simple-action point-im-info "%s")
+(def-simple-action point-im-subscribe-recs "S! %s")
+(def-simple-action point-im-unsubscribe "U %s")
+(def-simple-action point-im-unsubscribe-recs "U! %s")
+(def-simple-action point-im-bl "BL %s")
+(def-simple-action point-im-ubl "UBL %s")
+(def-simple-action point-im-wl "WL %s")
+(def-simple-action point-im-uwl "UWL %s")
+(def-simple-action point-im-recommend "! %s")
+(def-simple-action point-im-delete "D %s")
+(def-simple-action point-im-pin "pin %s")
+(def-simple-action point-im-unpin "unpin %s")
+(def-simple-action point-im-last "%s+")
 
 (defmacro def-moving-action (name search-fn re &optional forward)
   "Create action NAME using SEARCH-FN applied to RE.
@@ -324,6 +337,45 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (when point-im-reply-goto-end
     (goto-char (point-max))))
 
+;; Composing messages in external markdown/text buffer
+(defun point-im-compose (jc)
+  "Create a buffer for composing a message."
+  (interactive (list (jabber-read-account)))
+  (let ((matched-text (point-im-matched-at-point)))
+    (with-current-buffer (get-buffer-create
+                          (generate-new-buffer-name
+                           (concat "Point-Compose"
+                                   (when matched-text
+                                     (format "-%s" matched-text)))))
+      (insert (if matched-text (concat matched-text " ") ""))
+      (if (require 'markdown-mode nil t)
+          (funcall 'markdown-mode)
+        (funcall 'text-mode))
+      (point-im-compose-mode t)
+      (setq jabber-buffer-connection jc)
+      (switch-to-buffer-other-window (current-buffer))
+      (message (substitute-command-keys "\\<point-im-compose-mode-map>\\[point-im-compose-send] to send.")))))
+
+(defun point-im-compose-send ()
+  "Send buffer contents to bot."
+  (interactive)
+  (let ((text (buffer-string)))
+    (when (< 0 (length text))
+      (jabber-send-message jabber-buffer-connection point-im-bot-jid "" text nil)
+      (message "Message sent")))
+  (bury-buffer)
+  (delete-window))
+
+(defvar point-im-compose-mode-map (make-sparse-keymap)
+  "Fake keymap for sending message.")
+
+(define-key point-im-compose-mode-map (kbd "C-c C-c") #'point-im-compose-send)
+
+(define-minor-mode point-im-compose-mode
+  "Minor mode to simulate buffer local keybindings."
+  :init-value nil)
+
+
 ;; popup menus
 (defvar point-im-user-menu
   `(("Open in browser" . point-im-go-url)
@@ -365,36 +417,54 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (interactive "P")
   (pcase (point-im-prop-at-point 'type)
     (`tag (jabber-popup-menu point-im-tag-menu))
+    (`stag (jabber-popup-menu point-im-tag-menu))
     (`user (jabber-popup-menu point-im-user-menu))
     (`id (jabber-popup-menu point-im-id-menu))))
+
+(defun point-im-define-keys (map keymap-alist)
+  "Add key bindings to MAP taken from KEYMAP-ALIST."
+  (mapc
+   (lambda (keypair)
+     (pcase keypair
+       (`(,key . ,fn)
+        (define-key map (kbd key) fn))))
+   keymap-alist)
+  map)
+
+(defvar point-im-highlight-keymap-alist
+  '(("<mouse-2>" . point-im-go-url)
+    ("g" . point-im-go-url)
+    ("b" . point-im-bl)
+    ("w" . point-im-wl)
+    ("u" . point-im-unsubscribe)
+    ("s" . point-im-subscribe)
+    ("d" . point-im-delete)
+    ("RET" . point-im-insert)
+    ("!" . point-im-recommend)
+    ("C-c C-p" . point-im-popup-menu)
+    ("<mouse-3>" . point-im-popup-menu)))
 
 ;; bindings
 (defvar point-im-highlight-keymap
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
     (set-keymap-parent map jabber-common-keymap)
-    (define-key map (kbd "<mouse-2>") #'point-im-go-url)
-    (define-key map (kbd "g") #'point-im-go-url)
-    (define-key map (kbd "b") #'point-im-bl)
-    (define-key map (kbd "w") #'point-im-wl)
-    (define-key map (kbd "u") #'point-im-unsubscribe)
-    (define-key map (kbd "s") #'point-im-subscribe)
-    (define-key map (kbd "d") #'point-im-delete)
-    (define-key map (kbd "RET") #'point-im-insert)
-    (define-key map (kbd "!") #'point-im-recommend)
-    (define-key map (kbd "C-c C-p") #'point-im-popup-menu)
-    (define-key map (kbd "<mouse-3>") #'point-im-popup-menu)
+    (point-im-define-keys map point-im-highlight-keymap-alist)
     map)
   "Keymap to hold point-im.el key defs under highlighted IDs.")
+
+(defvar point-im-keymap-alist
+  '(("C-x M-p" . point-im-user-name-backward)
+    ("C-x M-n" . point-im-user-name-forward)
+    ("M-p" . point-im-id-backward)
+    ("M-n" . point-im-id-forward)
+    ("M-RET" . point-im-reply-to-post-comment)
+    ("C-c C-e" . point-im-compose)))
 
 (defvar point-im-keymap
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map jabber-chat-mode-map)
-    (define-key map (kbd "C-x M-p") #'point-im-user-name-backward)
-    (define-key map (kbd "C-x M-n") #'point-im-user-name-forward)
-    (define-key map (kbd "M-p") #'point-im-id-backward)
-    (define-key map (kbd "M-n") #'point-im-id-forward)
-    (define-key map (kbd "M-RET") #'point-im-reply-to-post-comment)
+    (point-im-define-keys map point-im-keymap-alist)
     map)
   "Keymap for `point-im-mode'.")
 
@@ -413,6 +483,12 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
             (point-im-insert)
             (point-im-go-url)))))))
 
+(defvar point-im-avy-keymap-alist
+  '(("M-g i" . point-im-avy-goto-id)
+    ("M-g u" . point-im-avy-goto-user-name)
+    ("M-g t" . point-im-avy-goto-tag)
+    ("M-g p" . point-im-avy-goto-any)))
+
 (when (require 'avy nil t)
   (def-point-im-avy-jump point-im-avy-goto-id point-im-id-regex)
   (def-point-im-avy-jump point-im-avy-goto-user-name point-im-user-name-regex)
@@ -426,11 +502,8 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
                              goto-address-url-regexp)
                        "\\|")
             "\\)"))
+  (point-im-define-keys point-im-keymap point-im-avy-keymap-alist))
 
-  (define-key point-im-keymap (kbd "M-g i") 'point-im-avy-goto-id)
-  (define-key point-im-keymap (kbd "M-g u") 'point-im-avy-goto-user-name)
-  (define-key point-im-keymap (kbd "M-g t") 'point-im-avy-goto-tag)
-  (define-key point-im-keymap (kbd "M-g p") 'point-im-avy-goto-any))
 
 (define-minor-mode point-im-mode
   "Toggle Point mode."
