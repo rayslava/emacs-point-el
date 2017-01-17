@@ -110,7 +110,7 @@ Useful for people more reading instead writing")
 
 (defun point-im--make-mouse-face (face)
   "Create a new face from FACE prefixed by \"mouse-\"."
-  (make-symbol (concat "mouse-" (symbol-name face))))
+  (intern (concat "mouse-" (symbol-name face))))
 
 (defun point-im--overlay-put (overlay prop value)
   "Set one property of overlay OVERLAY: give property PROP value VALUE only if VALUE is not nil.  VALUE will be returned."
@@ -161,8 +161,9 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
         (if mouse-face
             (overlay-put this-overlay 'mouse-face mouse-face)
           (let ((mf (point-im--make-mouse-face face)))
-            (copy-face face mf)
-            (set-face-underline mf t)
+            (unless (facep mf)
+              (copy-face face mf)
+              (set-face-underline mf t))
             (overlay-put this-overlay 'mouse-face mf)))
         (point-im--overlay-put this-overlay 'help-echo help-echo)))))
 
