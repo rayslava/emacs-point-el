@@ -176,7 +176,6 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
     (,point-im-stag-regex point-im-tag-face :type stag)
     (,point-im-quote-regex point-im-quote-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
-    (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-md-striked-out-regex point-im-striked-out-face))
   "Alist of elements (RE FACE-SYMBOL &key ...).
 For keyword arguments see `point-im--propertize'")
@@ -276,7 +275,7 @@ See `jabber-chat-printers' for full documentation."
 (def-simple-action point-im-delete "D %s")
 (def-simple-action point-im-pin "pin %s")
 (def-simple-action point-im-unpin "unpin %s")
-(def-simple-action point-im-last "%s+")
+(def-simple-action point-im-last "%s\+")
 
 (defmacro def-moving-action (name search-fn re &optional forward)
   "Create action NAME using SEARCH-FN applied to RE.
@@ -441,6 +440,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("s" . point-im-subscribe)
     ("d" . point-im-delete)
     ("RET" . point-im-insert)
+    ("+" . point-im-last)
     ("!" . point-im-recommend)
     ("C-c C-p" . point-im-popup-menu)
     ("<mouse-3>" . point-im-popup-menu)))
