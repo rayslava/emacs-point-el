@@ -110,7 +110,7 @@ Useful for people more reading instead writing")
 
 (defun point-im--make-mouse-face (face)
   "Create a new face from FACE prefixed by \"mouse-\"."
-  (make-symbol (concat "mouse-" (symbol-name face))))
+  (intern (concat "mouse-" (symbol-name face))))
 
 (defun point-im--overlay-put (overlay prop value)
   "Set one property of overlay OVERLAY: give property PROP value VALUE only if VALUE is not nil.  VALUE will be returned."
@@ -161,8 +161,9 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
         (if mouse-face
             (overlay-put this-overlay 'mouse-face mouse-face)
           (let ((mf (point-im--make-mouse-face face)))
-            (copy-face face mf)
-            (set-face-underline mf t)
+            (unless (facep mf)
+              (copy-face face mf)
+              (set-face-underline mf t))
             (overlay-put this-overlay 'mouse-face mf)))
         (point-im--overlay-put this-overlay 'help-echo help-echo)))))
 
@@ -174,7 +175,6 @@ FACE, MOUSE-FACE, HELP-ECHO and KEYMAP properties."
     (,point-im-tag-regex point-im-tag-face :type tag)
     (,point-im-stag-regex point-im-tag-face :type stag)
     (,point-im-quote-regex point-im-quote-face)
-    (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-striked-out-regex point-im-striked-out-face)
     (,point-im-md-striked-out-regex point-im-striked-out-face))
   "Alist of elements (RE FACE-SYMBOL &key ...).
@@ -275,7 +275,7 @@ See `jabber-chat-printers' for full documentation."
 (def-simple-action point-im-delete "D %s")
 (def-simple-action point-im-pin "pin %s")
 (def-simple-action point-im-unpin "unpin %s")
-(def-simple-action point-im-last "%s+")
+(def-simple-action point-im-last "%s\+")
 
 (defmacro def-moving-action (name search-fn re &optional forward)
   "Create action NAME using SEARCH-FN applied to RE.
@@ -440,6 +440,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("s" . point-im-subscribe)
     ("d" . point-im-delete)
     ("RET" . point-im-insert)
+    ("+" . point-im-last)
     ("!" . point-im-recommend)
     ("C-c C-p" . point-im-popup-menu)
     ("<mouse-3>" . point-im-popup-menu)))
