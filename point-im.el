@@ -81,7 +81,7 @@ Useful for people more reading instead writing")
 ;; regexes, first matched group will be fontified
 (defvar point-im-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-im-user-name-regex "\\B\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
-(defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
+(defvar point-im-tag-regex  "\\(\\*[^[:space:]][^\\*]*?\\)[[:space:]]")
 (defvar point-im-stag-regex  "[[:space:]]\\(\\*\\*[^\\*]+?\\*\\*\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
