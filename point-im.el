@@ -343,7 +343,8 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (let* ((prop (if use-url 'url 'matched-text))
          (text (point-im-prop-at-point prop)))
     (when text
-      (kill-new text))))
+      (kill-new text)
+      (message text))))
 
 ;; Composing messages in external markdown/text buffer
 (defun point-im-compose (jc)
