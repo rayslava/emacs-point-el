@@ -442,6 +442,10 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("RET" . point-im-insert)
     ("+" . point-im-last)
     ("!" . point-im-recommend)
+    ("p" . point-im-id-backward)
+    ("n" . point-im-id-forward)
+    ("P" . point-im-user-name-backward)
+    ("N" . point-im-user-name-forward)
     ("C-c C-p" . point-im-popup-menu)
     ("<mouse-3>" . point-im-popup-menu)))
 
