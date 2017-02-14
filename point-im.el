@@ -337,6 +337,14 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (when point-im-reply-goto-end
     (goto-char (point-max))))
 
+(defun point-im-copy-id (use-url)
+  "Copy id at point or its url, if prefix argument USE-URL is not nil."
+  (interactive "P")
+  (let* ((prop (if use-url 'url 'matched-text))
+         (text (point-im-prop-at-point prop)))
+    (when text
+      (kill-new text))))
+
 ;; Composing messages in external markdown/text buffer
 (defun point-im-compose (jc)
   "Create a buffer for composing a message."
@@ -446,6 +454,7 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("n" . point-im-id-forward)
     ("P" . point-im-user-name-backward)
     ("N" . point-im-user-name-forward)
+    ("c" . point-im-copy-id)
     ("C-c C-p" . point-im-popup-menu)
     ("<mouse-3>" . point-im-popup-menu)))
 
