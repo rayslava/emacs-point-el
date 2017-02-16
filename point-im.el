@@ -81,7 +81,7 @@ Useful for people more reading instead writing")
 ;; regexes, first matched group will be fontified
 (defvar point-im-id-regex "\\(#[a-z]+\\(/[0-9]+\\)?\\)")
 (defvar point-im-user-name-regex "\\B\\(@[0-9A-Za-z@\\.\\_\\-]+\\)")
-(defvar point-im-tag-regex  "\\(\\*[^\\*]+?\\)[[:space:]]")
+(defvar point-im-tag-regex  "\\(\\*[^[:space:]][^\\*]*?\\)[[:space:]]")
 (defvar point-im-stag-regex  "[[:space:]]\\(\\*\\*[^\\*]+?\\*\\*\\)[[:space:]]")
 (defvar point-im-bold-regex "\\*\\*\\(.*\\)\\*\\*")
 (defvar point-im-italic-regex "\\*\\(.*?\\)\\*[[:space:]]")
@@ -337,6 +337,15 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
   (when point-im-reply-goto-end
     (goto-char (point-max))))
 
+(defun point-im-copy-id (use-url)
+  "Copy id at point or its url, if prefix argument USE-URL is not nil."
+  (interactive "P")
+  (let* ((prop (if use-url 'url 'matched-text))
+         (text (point-im-prop-at-point prop)))
+    (when text
+      (kill-new text)
+      (message text))))
+
 ;; Composing messages in external markdown/text buffer
 (defun point-im-compose (jc)
   "Create a buffer for composing a message."
@@ -442,6 +451,11 @@ When `point-im-reply-goto-end' is not nil - go to the end of buffer"
     ("RET" . point-im-insert)
     ("+" . point-im-last)
     ("!" . point-im-recommend)
+    ("p" . point-im-id-backward)
+    ("n" . point-im-id-forward)
+    ("P" . point-im-user-name-backward)
+    ("N" . point-im-user-name-forward)
+    ("c" . point-im-copy-id)
     ("C-c C-p" . point-im-popup-menu)
     ("<mouse-3>" . point-im-popup-menu)))
 
